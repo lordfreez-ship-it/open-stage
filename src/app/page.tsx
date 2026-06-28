@@ -47,7 +47,7 @@ export default function GuestPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !selectedSong.trim()) return;
+    if (!name.trim()) return;
     if (duplicateWarning && !confirmedDuplicate) return;
 
     setSubmitting(true);
@@ -55,7 +55,7 @@ export default function GuestPage() {
       .from('queue_entries')
       .insert({
         name: name.trim(),
-        song: selectedSong,
+        song: selectedSong.trim() || 'Valfri / Any song',
         custom_song: customSong.trim() || null,
         email: email.trim() || null,
         video_consent: videoConsent,
@@ -101,11 +101,10 @@ export default function GuestPage() {
 
           <div>
             <label className="block text-sm text-white/60 mb-1">
-              Låt / Song *
+              Låt / Song <span className="text-white/30">(valfritt / optional)</span>
             </label>
             <input
               type="text"
-              required
               list="song-list"
               value={selectedSong}
               onChange={(e) => handleSongChange(e.target.value)}
@@ -189,7 +188,7 @@ export default function GuestPage() {
 
           <button
             type="submit"
-            disabled={submitting || !name.trim() || !selectedSong.trim() || (duplicateWarning && !confirmedDuplicate)}
+            disabled={submitting || !name.trim() || (duplicateWarning && !confirmedDuplicate)}
             className="w-full bg-[#C1440E] hover:bg-[#D4550F] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-lg text-lg transition"
           >
             {submitting ? 'Skickar...' : 'Anmäl dig / Sign up 🎶'}
