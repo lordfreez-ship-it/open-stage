@@ -47,7 +47,7 @@ export default function GuestPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !selectedSong) return;
+    if (!name.trim() || !selectedSong.trim()) return;
     if (duplicateWarning && !confirmedDuplicate) return;
 
     setSubmitting(true);
@@ -103,19 +103,21 @@ export default function GuestPage() {
             <label className="block text-sm text-white/60 mb-1">
               Låt / Song *
             </label>
-            <select
+            <input
+              type="text"
               required
+              list="song-list"
               value={selectedSong}
               onChange={(e) => handleSongChange(e.target.value)}
-              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#C9922A] transition appearance-none"
-            >
-              <option value="" className="bg-[#1A1A1A]">Välj en låt / Choose a song</option>
+              onBlur={() => checkDuplicate(selectedSong)}
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#C9922A] transition"
+              placeholder="Skriv eller välj en låt / Type or choose a song"
+            />
+            <datalist id="song-list">
               {songs.map((s) => (
-                <option key={`${s.title}-${s.artist}`} value={`${s.title} — ${s.artist}`} className="bg-[#1A1A1A]">
-                  {s.title} — {s.artist}
-                </option>
+                <option key={`${s.title}-${s.artist}`} value={`${s.title} — ${s.artist}`} />
               ))}
-            </select>
+            </datalist>
           </div>
 
           {duplicateWarning && (
@@ -187,7 +189,7 @@ export default function GuestPage() {
 
           <button
             type="submit"
-            disabled={submitting || !name.trim() || !selectedSong || (duplicateWarning && !confirmedDuplicate)}
+            disabled={submitting || !name.trim() || !selectedSong.trim() || (duplicateWarning && !confirmedDuplicate)}
             className="w-full bg-[#C1440E] hover:bg-[#D4550F] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-lg text-lg transition"
           >
             {submitting ? 'Skickar...' : 'Anmäl dig / Sign up 🎶'}
