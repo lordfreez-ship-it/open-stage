@@ -135,10 +135,10 @@ export default function GuestPage() {
       localStorage.setItem('os_name', name.trim());
       localStorage.setItem('os_email', email.trim());
       localStorage.setItem('os_consent', String(videoConsent));
-      if (songValue && songValue !== 'Valfri / Any song') {
-        supabase.rpc('record_song_request', { p_label: songValue });
-      }
       setEntry(data as QueueEntry);
+      if (songValue && songValue !== 'Valfri / Any song') {
+        supabase.rpc('record_song_request', { p_label: songValue }).then(() => {}, () => {});
+      }
     }
     setSubmitting(false);
   };

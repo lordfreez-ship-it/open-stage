@@ -103,7 +103,7 @@ export default function AdminPage() {
   const markDone = async (e: QueueEntry) => {
     await updateStatus(e.id, 'done');
     if (e.song && e.song !== 'Valfri / Any song') {
-      supabase.rpc('record_song_play', { p_label: e.song });
+      await supabase.rpc('record_song_play', { p_label: e.song });
     }
   };
 
