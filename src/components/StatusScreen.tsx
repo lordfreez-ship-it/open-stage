@@ -8,34 +8,33 @@ const SWISH_NUMBER = process.env.NEXT_PUBLIC_SWISH_NUMBER || '';
 const FACEBOOK_URL = process.env.NEXT_PUBLIC_FACEBOOK_URL || '';
 const YOUTUBE_URL = process.env.NEXT_PUBLIC_YOUTUBE_URL || '';
 
-async function subscribeToPush(entryId: string) {
+type SubResult = 'ok' | 'no-key' | 'unsupported' | 'error';
+
+async function subscribeToPush(entryId: string): Promise<SubResult> {
   try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return 'unsupported';
     const registration = await navigator.serviceWorker.ready;
-    const existing = await registration.pushManager.getSubscription();
-    if (existing) {
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entryId, subscription: existing.toJSON() }),
+
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      const res = await fetch('/api/push/vapid');
+      const { publicKey } = await res.json();
+      if (!publicKey) return 'no-key';
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
       });
-      return;
     }
 
-    const res = await fetch('/api/push/vapid');
-    const { publicKey } = await res.json();
-    if (!publicKey) return;
-
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    });
-
-    await fetch('/api/push/subscribe', {
+    const saved = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entryId, subscription: subscription.toJSON() }),
     });
-  } catch { /* push not supported */ }
+    return saved.ok ? 'ok' : 'error';
+  } catch {
+    return 'error';
+  }
 }
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -71,6 +70,8 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [videoEmail, setVideoEmail] = useState('');
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
+  const [testMsg, setTestMsg] = useState('');
+  const [testing, setTesting] = useState(false);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const prevStatusRef = useRef(initial.status);
 
@@ -87,15 +88,44 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
     const perm = await Notification.requestPermission();
     setNotifPermission(perm);
     if (perm === 'granted') {
+      await subscribeToPush(initial.id);
+    }
+  }, [initial.id]);
+
+  // Ensure a push subscription is saved for THIS entry whenever permission is
+  // already granted — otherwise a returning user (who granted earlier) would
+  // never have their subscription stored for the new registration.
+  useEffect(() => {
+    if (!('Notification' in window)) return;
+    setNotifPermission(Notification.permission);
+    if (Notification.permission === 'granted') {
       subscribeToPush(initial.id);
     }
   }, [initial.id]);
 
-  useEffect(() => {
-    if ('Notification' in window) {
-      setNotifPermission(Notification.permission);
+  const sendTest = useCallback(async () => {
+    setTesting(true);
+    setTestMsg('');
+    const sub = await subscribeToPush(initial.id);
+    if (sub === 'unsupported') { setTestMsg('⚠ Den här webbläsaren stöder inte notiser.'); setTesting(false); return; }
+    if (sub === 'no-key') { setTestMsg('⚠ Servern saknar VAPID-nycklar. Lägg till dem i Vercel och deploya om.'); setTesting(false); return; }
+    if (sub === 'error') { setTestMsg('⚠ Kunde inte registrera notiser. Ladda om sidan och försök igen.'); setTesting(false); return; }
+    try {
+      const res = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryId: initial.id, status: 'test' }),
+      });
+      const data = await res.json();
+      if (data.sent) setTestMsg('✓ Skickat! Lås skärmen — notisen kommer inom några sekunder.');
+      else if (data.error === 'VAPID keys not configured') setTestMsg('⚠ Servern saknar VAPID-nycklar (kontrollera Vercel + deploya om).');
+      else if (data.skipped) setTestMsg('⚠ Ingen prenumeration hittades. Ladda om sidan och försök igen.');
+      else setTestMsg(`⚠ Fel: ${data.statusCode || ''} ${data.error || ''}`.trim());
+    } catch {
+      setTestMsg('⚠ Nätverksfel. Försök igen.');
     }
-  }, []);
+    setTesting(false);
+  }, [initial.id]);
 
   useEffect(() => {
     const channel = supabase
@@ -130,14 +160,31 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
   const swishData = JSON.stringify({ format: 'raw', version: 1, payee: { value: SWISH_NUMBER }, message: { value: 'Open Stage tip' } });
   const swishUrl = `swish://payment?data=${encodeURIComponent(swishData)}`;
 
-  const notifBanner = notifPermission === 'default' && (
+  const notifBanner = notifPermission === 'denied' ? (
+    <div className="fixed top-0 left-0 right-0 z-[60] bg-[rgba(220,80,40,0.16)] border-b border-[rgba(220,80,40,0.35)] py-2.5 px-5 text-center"
+      style={{ animation: 'slide-down 0.3s ease' }}>
+      <span className="text-[13px] text-[#F0794A] font-semibold">
+        Notiser är blockerade — aktivera dem i webbläsarens inställningar
+      </span>
+    </div>
+  ) : notifPermission === 'granted' ? (
+    <div className="fixed top-0 left-0 right-0 z-[60] bg-[rgba(0,200,83,0.12)] border-b border-[rgba(0,200,83,0.28)] py-2 px-4 flex items-center justify-center gap-3 flex-wrap"
+      style={{ animation: 'slide-down 0.3s ease' }}>
+      <span className="text-[13px] text-[#00C853] font-semibold">🔔 Notiser på</span>
+      <button onClick={sendTest} disabled={testing}
+        className="text-[12px] bg-[rgba(0,200,83,0.18)] border border-[rgba(0,200,83,0.4)] text-[#00C853] rounded-lg px-3 py-1 font-bold cursor-pointer disabled:opacity-50">
+        {testing ? 'Skickar…' : 'Skicka testnotis'}
+      </button>
+      {testMsg && <span className="text-[12px] text-[#F5F0E8] w-full text-center leading-[1.4]">{testMsg}</span>}
+    </div>
+  ) : (
     <button
       onClick={requestNotificationPermission}
       className="fixed top-0 left-0 right-0 z-[60] bg-[rgba(201,146,42,0.15)] border-b border-[rgba(201,146,42,0.3)] py-3 px-5 text-center cursor-pointer"
       style={{ animation: 'slide-down 0.3s ease' }}
     >
-      <span className="text-[13px] text-[#C9922A] font-semibold">
-        Aktivera notiser så vi kan meddela dig när det är din tur
+      <span className="text-[14px] text-[#C9922A] font-semibold">
+        🔔 Tryck här för att få en notis när det är din tur
       </span>
     </button>
   );

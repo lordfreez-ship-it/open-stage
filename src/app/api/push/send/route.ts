@@ -31,6 +31,11 @@ const STATUS_MESSAGES: Record<string, { title: string; body: string; icon: strin
     body: 'Gå upp på scen — det är dags!',
     icon: '/icons/icon-192x192.png',
   },
+  test: {
+    title: 'Testnotis ✓',
+    body: 'notiser fungerar! Du får en notis när det är din tur.',
+    icon: '/icons/icon-192x192.png',
+  },
 };
 
 export async function POST(req: NextRequest) {
@@ -70,13 +75,18 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json({ ok: true, sent: true });
   } catch (err) {
-    const pushErr = err as { statusCode?: number };
+    const pushErr = err as { statusCode?: number; body?: string };
     if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
       await getSupabase()
         .from('queue_entries')
         .update({ push_subscription: null })
         .eq('id', entryId);
     }
-    return NextResponse.json({ ok: true, error: 'push failed' });
+    return NextResponse.json({
+      ok: false,
+      error: 'push failed',
+      statusCode: pushErr.statusCode ?? null,
+      detail: pushErr.body ?? null,
+    });
   }
 }
