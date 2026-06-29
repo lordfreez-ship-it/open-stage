@@ -156,7 +156,7 @@ export default function AdminPage() {
   const waitingCount = entries.filter(e => e.status === 'registered' || e.status === 'waiting').length;
 
   return (
-    <div className="min-h-screen bg-[#1A1A1A] max-w-[480px] md:max-w-[720px] lg:max-w-[900px] mx-auto">
+    <div className="min-h-screen bg-[#1A1A1A] w-full max-w-[1500px] mx-auto">
       {/* Admin header */}
       <header className="sticky top-0 z-50 backdrop-blur-[18px] border-b border-[#1E1E1E] px-4 md:px-6 py-3 md:py-4"
         style={{ background: 'rgba(14,14,14,0.98)' }}>
@@ -174,7 +174,7 @@ export default function AdminPage() {
             <div className="text-[9px] text-[#3A3A3A] tracking-[0.14em] uppercase font-semibold">Admin</div>
           </div>
           <div className="bg-[rgba(201,146,42,0.09)] border border-[rgba(201,146,42,0.22)] rounded-[20px] px-[13px] py-1">
-            <span className="text-xs text-[#C9922A] font-bold">{waitingCount} väntar</span>
+            <span className="text-[14px] md:text-[18px] text-[#C9922A] font-bold">{waitingCount} väntar</span>
           </div>
         </div>
       </header>
@@ -183,7 +183,7 @@ export default function AdminPage() {
       <div className="flex px-3.5 md:px-6 pt-3.5 md:pt-5 gap-2 md:gap-3">
         <button
           onClick={() => setTab('queue')}
-          className="flex-1 py-2.5 md:py-3.5 rounded-lg text-xs md:text-sm font-bold tracking-[0.04em] transition-all"
+          className="flex-1 py-3 md:py-4 rounded-lg text-[15px] md:text-[18px] font-bold tracking-[0.04em] transition-all"
           style={{
             background: tab === 'queue' ? 'rgba(201,146,42,0.12)' : 'transparent',
             color: tab === 'queue' ? '#C9922A' : '#3A3A3A',
@@ -194,7 +194,7 @@ export default function AdminPage() {
         </button>
         <button
           onClick={() => setTab('history')}
-          className="flex-1 py-2.5 md:py-3.5 rounded-lg text-xs md:text-sm font-bold tracking-[0.04em] transition-all"
+          className="flex-1 py-3 md:py-4 rounded-lg text-[15px] md:text-[18px] font-bold tracking-[0.04em] transition-all"
           style={{
             background: tab === 'history' ? 'rgba(201,146,42,0.12)' : 'transparent',
             color: tab === 'history' ? '#C9922A' : '#3A3A3A',
@@ -208,13 +208,14 @@ export default function AdminPage() {
       {/* Queue cards */}
       {tab === 'queue' && <div className="px-3.5 md:px-6 pt-[18px] md:pt-6 pb-[52px]">
         {entries.length > 0 ? (
-          entries.map((e) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 items-start">
+          {entries.map((e) => {
             const isOnStage = e.status === 'your_turn';
             const isWaiting = e.status === 'waiting';
             return (
               <div
                 key={e.id}
-                className="rounded-[14px] p-4 md:p-5 mb-3 md:mb-4"
+                className="rounded-[14px] p-4 md:p-5"
                 style={{
                   background: '#202020',
                   border: `1px solid ${isOnStage ? '#C9922A' : '#272727'}`,
@@ -224,30 +225,30 @@ export default function AdminPage() {
                 {/* Card header */}
                 <div className="flex items-center justify-between mb-3.5">
                   <div className="flex items-center gap-[11px]">
-                    <div className="w-10 h-10 rounded-full bg-[rgba(201,146,42,0.1)] border border-[rgba(201,146,42,0.22)] flex items-center justify-center font-[family-name:var(--font-playfair)] font-extrabold text-[#C9922A] text-sm shrink-0">
+                    <div className="w-11 h-11 md:w-[52px] md:h-[52px] rounded-full bg-[rgba(201,146,42,0.1)] border border-[rgba(201,146,42,0.22)] flex items-center justify-center font-[family-name:var(--font-playfair)] font-extrabold text-[#C9922A] text-base md:text-lg shrink-0">
                       {getInitials(e.name)}
                     </div>
                     <div>
-                      <div className="font-semibold text-[#F5F0E8] text-[15px] flex items-center gap-2 leading-[1.2]">
+                      <div className="font-semibold text-[#F5F0E8] text-[16px] md:text-[19px] flex items-center gap-2 leading-[1.2] flex-wrap">
                         {e.name}
                         {e.video_consent ? (
-                          <span className="text-[9px] bg-[rgba(0,200,83,0.12)] text-[#00C853] border border-[rgba(0,200,83,0.25)] px-1.5 py-[2px] rounded font-bold tracking-[0.04em]">🎥 OK</span>
+                          <span className="text-[10px] bg-[rgba(0,200,83,0.12)] text-[#00C853] border border-[rgba(0,200,83,0.25)] px-1.5 py-[2px] rounded font-bold tracking-[0.04em]">🎥 OK</span>
                         ) : (
-                          <span className="text-[9px] bg-[rgba(255,60,60,0.08)] text-[#FF4444] border border-[rgba(255,60,60,0.2)] px-1.5 py-[2px] rounded font-bold tracking-[0.04em]">🚫 Nej</span>
+                          <span className="text-[10px] bg-[rgba(255,60,60,0.08)] text-[#FF4444] border border-[rgba(255,60,60,0.2)] px-1.5 py-[2px] rounded font-bold tracking-[0.04em]">🚫 Nej</span>
                         )}
                       </div>
-                      <div className="text-xs text-[#4A4A4A] mt-0.5">
+                      <div className="text-[14px] md:text-[16px] text-[#8C8478] mt-1">
                         {e.song}
                         {e.custom_song && <span className="text-[#C9922A] ml-1">+ {e.custom_song}</span>}
                       </div>
-                      {e.email && <div className="text-[10px] text-[#333] mt-0.5">📧 {e.email}</div>}
+                      {e.email && <div className="text-[12px] md:text-[13px] text-[#6A6358] mt-0.5">📧 {e.email}</div>}
                     </div>
                   </div>
                   <span
-                    className="text-[11px] font-semibold whitespace-nowrap shrink-0 px-[11px] py-1 rounded-[20px]"
+                    className="text-[12px] md:text-[14px] font-semibold whitespace-nowrap shrink-0 px-[11px] py-1.5 rounded-[20px]"
                     style={{
                       background: isOnStage ? 'rgba(201,146,42,0.1)' : 'rgba(255,255,255,0.03)',
-                      color: isOnStage ? '#C9922A' : '#3A3A3A',
+                      color: isOnStage ? '#C9922A' : '#6A6358',
                       border: `1px solid ${isOnStage ? 'rgba(201,146,42,0.28)' : '#242424'}`,
                     }}
                   >
@@ -258,15 +259,15 @@ export default function AdminPage() {
                 {/* Action buttons */}
                 <div className="flex gap-[7px] md:gap-2.5 flex-wrap">
                   <button onClick={() => updateStatus(e.id, 'waiting')}
-                    className="flex-1 bg-[rgba(201,146,42,0.12)] text-[#C9922A] border border-[rgba(201,146,42,0.28)] rounded-lg py-[9px] px-1 text-xs font-bold cursor-pointer min-w-[72px] whitespace-nowrap">
+                    className="flex-1 bg-[rgba(201,146,42,0.12)] text-[#C9922A] border border-[rgba(201,146,42,0.28)] rounded-lg py-3 md:py-3.5 px-1 text-[13px] md:text-[15px] font-bold cursor-pointer min-w-[72px] whitespace-nowrap">
                     📣 Nästa
                   </button>
                   <button onClick={() => updateStatus(e.id, 'your_turn')}
-                    className="flex-1 bg-[rgba(0,200,83,0.09)] text-[#00C853] border border-[rgba(0,200,83,0.22)] rounded-lg py-[9px] px-1 text-xs font-bold cursor-pointer min-w-[72px] whitespace-nowrap">
+                    className="flex-1 bg-[rgba(0,200,83,0.09)] text-[#00C853] border border-[rgba(0,200,83,0.22)] rounded-lg py-3 md:py-3.5 px-1 text-[13px] md:text-[15px] font-bold cursor-pointer min-w-[72px] whitespace-nowrap">
                     🎤 Din tur
                   </button>
                   <button onClick={() => recordTimestamp(e.id)}
-                    className="flex-1 rounded-lg py-[9px] px-1 text-xs cursor-pointer min-w-[72px] whitespace-nowrap"
+                    className="flex-1 rounded-lg py-3 md:py-3.5 px-1 text-[13px] md:text-[15px] cursor-pointer min-w-[72px] whitespace-nowrap"
                     style={{
                       background: e.video_consent ? 'rgba(193,68,14,0.16)' : 'transparent',
                       color: e.video_consent ? '#FF6040' : '#2E2E2E',
@@ -279,17 +280,18 @@ export default function AdminPage() {
                     ⏺ Spela in
                   </button>
                   <button onClick={() => updateStatus(e.id, 'done')}
-                    className="flex-1 bg-[#1C1C1C] text-[#444] border border-[#242424] rounded-lg py-[9px] px-1 text-xs font-medium cursor-pointer min-w-[60px] whitespace-nowrap">
+                    className="flex-1 bg-[#1C1C1C] text-[#444] border border-[#242424] rounded-lg py-3 md:py-3.5 px-1 text-[13px] md:text-[15px] font-medium cursor-pointer min-w-[60px] whitespace-nowrap">
                     ✓ Klar
                   </button>
                   <button onClick={() => updateStatus(e.id, 'skipped')}
-                    className="bg-transparent border border-[#1E1E1E] text-[#2E2E2E] rounded-lg py-[9px] px-2.5 text-[11px] cursor-pointer whitespace-nowrap">
+                    className="bg-transparent border border-[#2A2A2A] text-[#5A5A52] rounded-lg py-3 md:py-3.5 px-3 text-[12px] md:text-[14px] cursor-pointer whitespace-nowrap">
                     Hoppa
                   </button>
                 </div>
               </div>
             );
-          })
+          })}
+          </div>
         ) : (
           <div className="text-center py-[72px] px-5 text-[#282828]">
             <div className="text-[52px] mb-4">🎸</div>
@@ -317,10 +319,11 @@ export default function AdminPage() {
             return Object.entries(grouped).map(([sessionId, items]) => (
               <div key={sessionId} className="mb-6">
                 <div className="flex items-center gap-2.5 mb-3">
-                  <div className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#C9922A] whitespace-nowrap">📅 {sessionId}</div>
+                  <div className="text-[13px] md:text-[15px] font-bold tracking-[0.1em] uppercase text-[#C9922A] whitespace-nowrap">📅 {sessionId}</div>
                   <div className="flex-1 h-px bg-[#2A2A2A]" />
-                  <div className="text-[10px] text-[#444] whitespace-nowrap">{items.length} st</div>
+                  <div className="text-[12px] text-[#6A6358] whitespace-nowrap">{items.length} st</div>
                 </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 items-start">
                 {items.map((e) => {
                   const createdTime = new Date(e.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Stockholm' });
                   const recordedTime = e.recorded_at
@@ -329,7 +332,7 @@ export default function AdminPage() {
                   return (
                     <div
                       key={e.id}
-                      className="rounded-[14px] p-4 mb-3"
+                      className="rounded-[14px] p-4"
                       style={{
                         background: '#202020',
                         border: `1px solid ${e.status === 'skipped' ? '#2A1A1A' : '#272727'}`,
@@ -338,11 +341,11 @@ export default function AdminPage() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-[11px]">
-                          <div className="w-10 h-10 rounded-full bg-[rgba(201,146,42,0.1)] border border-[rgba(201,146,42,0.22)] flex items-center justify-center font-[family-name:var(--font-playfair)] font-extrabold text-[#C9922A] text-sm shrink-0">
+                          <div className="w-11 h-11 md:w-[52px] md:h-[52px] rounded-full bg-[rgba(201,146,42,0.1)] border border-[rgba(201,146,42,0.22)] flex items-center justify-center font-[family-name:var(--font-playfair)] font-extrabold text-[#C9922A] text-base md:text-lg shrink-0">
                             {getInitials(e.name)}
                           </div>
                           <div>
-                            <div className="font-semibold text-[#F5F0E8] text-[15px] flex items-center gap-2 leading-[1.2] flex-wrap">
+                            <div className="font-semibold text-[#F5F0E8] text-[16px] md:text-[18px] flex items-center gap-2 leading-[1.2] flex-wrap">
                               {e.name}
                               {e.video_consent ? (
                                 <span className="text-[9px] bg-[rgba(0,200,83,0.12)] text-[#00C853] border border-[rgba(0,200,83,0.25)] px-1.5 py-[2px] rounded font-bold">🎥 OK</span>
@@ -353,7 +356,7 @@ export default function AdminPage() {
                                 <span className="text-[9px] bg-[rgba(100,140,255,0.1)] text-[#7B9FFF] border border-[rgba(100,140,255,0.25)] px-1.5 py-[2px] rounded font-bold">📨 Vill ha video</span>
                               )}
                             </div>
-                            <div className="text-xs text-[#4A4A4A] mt-0.5">{e.song}</div>
+                            <div className="text-[14px] md:text-[15px] text-[#8C8478] mt-1">{e.song}</div>
                           </div>
                         </div>
                         <span className={`text-[11px] font-semibold px-[11px] py-1 rounded-[20px] shrink-0 ${
@@ -387,6 +390,7 @@ export default function AdminPage() {
                     </div>
                   );
                 })}
+                </div>
               </div>
             ));
           })()
