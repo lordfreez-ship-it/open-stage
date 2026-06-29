@@ -175,11 +175,11 @@ export default function GuestPage() {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 px-[18px] md:px-8 pt-7 md:pt-10 pb-[108px]">
-        <p className="text-[10px] tracking-[0.2em] uppercase text-[#C9922A] mb-1.5 font-semibold">Anmäl dig</p>
-        <h2 className="font-[family-name:var(--font-playfair)] text-[26px] font-extrabold text-[#F5F0E8] leading-[1.2] mb-1.5">
+        <p className="text-[12px] tracking-[0.18em] uppercase text-[#C9922A] mb-1.5 font-semibold">Anmäl dig</p>
+        <h2 className="font-[family-name:var(--font-playfair)] text-[28px] font-extrabold text-[#F5F0E8] leading-[1.2] mb-1.5">
           Kliv upp på scen!
         </h2>
-        <p className="text-[13px] text-[#888] mb-6 leading-[1.5]">
+        <p className="text-[16px] text-[#B5AE9F] mb-6 leading-[1.6]">
           Fyll i nedan och välj din låt — vi kallar på dig när det är dags.
         </p>
 
@@ -187,19 +187,19 @@ export default function GuestPage() {
         <form onSubmit={handleSubmit} className="bg-[#242424] rounded-2xl p-[22px] md:p-8 border border-[#282828] mb-9">
           {/* Name */}
           <div className="mb-[15px]">
-            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">Namn</label>
+            <label className="block text-[16px] font-semibold text-[#E5DDD0] mb-2">Namn</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Namn"
-              className="w-full px-3.5 py-3 bg-[#2A2A2A] border border-[#444] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#C9922A] transition placeholder:text-[#666]"
+              className="w-full px-4 py-3.5 bg-[#2A2A2A] border border-[#5C564C] rounded-[10px] text-[#F5F0E8] text-[17px] outline-none focus:border-[#C9922A] transition placeholder:text-[#8B8479]"
             />
           </div>
 
           {/* Song search (Spotify + BandHelper) */}
           <div className="mb-[15px] relative z-[45]" ref={searchRef}>
-            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">
+            <label className="block text-[16px] font-semibold text-[#E5DDD0] mb-2">
               Sök låt
             </label>
             <div className="relative">
@@ -209,8 +209,8 @@ export default function GuestPage() {
                 onChange={(e) => handleSongQueryChange(e.target.value)}
                 onFocus={() => { if (songQuery.length >= 2 && !selectedSong) setShowResults(true); }}
                 placeholder="Sök artist eller låt..."
-                className={`w-full px-3.5 py-3 bg-[#2A2A2A] border rounded-[9px] text-[#F5F0E8] text-[15px] outline-none transition placeholder:text-[#666] ${
-                  selectedSong ? 'border-[#C9922A]' : 'border-[#444] focus:border-[#C9922A]'
+                className={`w-full px-4 py-3.5 bg-[#2A2A2A] border rounded-[10px] text-[#F5F0E8] text-[17px] outline-none transition placeholder:text-[#8B8479] ${
+                  selectedSong ? 'border-[#C9922A]' : 'border-[#5C564C] focus:border-[#C9922A]'
                 }`}
               />
               {selectedSong && (
@@ -228,7 +228,7 @@ export default function GuestPage() {
             </div>
 
             {duplicateWarning && (
-              <div className="mt-[7px] flex items-center gap-1.5 text-[#E05A2B] text-xs" style={{ animation: 'slide-down 0.25s ease' }}>
+              <div className="mt-2 flex items-center gap-1.5 text-[#F0794A] text-[14px]" style={{ animation: 'slide-down 0.25s ease' }}>
                 <span>⚠</span><span>Låten är redan vald — välj en annan eller bekräfta!</span>
                 <button type="button" onClick={() => setConfirmedDuplicate(true)}
                   className={`ml-2 px-2 py-0.5 rounded text-[10px] font-medium ${confirmedDuplicate ? 'bg-[#C9922A] text-[#1A1A1A]' : 'bg-white/10 text-white/60'}`}>
@@ -257,8 +257,8 @@ export default function GuestPage() {
                           />
                         )}
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm text-[#F5F0E8] font-medium truncate">{r.title}</div>
-                          <div className="text-xs text-[#666] truncate">{r.artist}</div>
+                          <div className="text-[16px] text-[#F5F0E8] font-medium truncate">{r.title}</div>
+                          <div className="text-[14px] text-[#9A9286] truncate">{r.artist}</div>
                         </div>
                         <span className={`text-[9px] font-bold px-2 py-[3px] rounded-[4px] whitespace-nowrap shrink-0 ${
                           onStage
@@ -286,29 +286,29 @@ export default function GuestPage() {
 
           {/* Email */}
           <div className="mb-[15px]">
-            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">
-              E-post <span className="font-normal normal-case tracking-normal text-[#777]">(bekräftelse)</span>
+            <label className="block text-[16px] font-semibold text-[#E5DDD0] mb-2">
+              E-post <span className="font-normal text-[#A39C8E] text-[14px]">(bekräftelse)</span>
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="din@email.se"
-              className="w-full px-3.5 py-3 bg-[#2A2A2A] border border-[#444] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#C9922A] transition placeholder:text-[#666]"
+              className="w-full px-4 py-3.5 bg-[#2A2A2A] border border-[#5C564C] rounded-[10px] text-[#F5F0E8] text-[17px] outline-none focus:border-[#C9922A] transition placeholder:text-[#8B8479]"
             />
           </div>
 
           {/* Consent */}
-          <div className="mb-5 flex items-start gap-[11px] bg-[rgba(201,146,42,0.05)] border border-[rgba(201,146,42,0.1)] rounded-[10px] px-3.5 py-[13px]">
+          <div className="mb-5 flex items-start gap-3 bg-[rgba(201,146,42,0.05)] border border-[rgba(201,146,42,0.1)] rounded-[10px] px-4 py-4">
             <input
               type="checkbox"
               checked={videoConsent}
               onChange={(e) => setVideoConsent(e.target.checked)}
-              className="mt-0.5 shrink-0 w-[18px] h-[18px] accent-[#C9922A] cursor-pointer"
+              className="mt-0.5 shrink-0 w-[24px] h-[24px] accent-[#C9922A] cursor-pointer"
             />
-            <label className="text-xs text-[#999] leading-[1.6] cursor-pointer">
+            <label className="text-[15px] text-[#C8C0B2] leading-[1.6] cursor-pointer">
               Jag godkänner att mitt uppträdande kan filmas och publiceras på DC&apos;s kanaler.{' '}
-              <span className="text-[#C9922A] font-medium">🎥 Videoinspelning OK</span>
+              <span className="text-[#C9922A] font-semibold">🎥 Videoinspelning OK</span>
             </label>
           </div>
 
@@ -316,7 +316,7 @@ export default function GuestPage() {
           <button
             type="submit"
             disabled={submitting || !formIsValid}
-            className="w-full py-3.5 rounded-[10px] text-base font-bold tracking-[0.025em] transition-all duration-250 cursor-pointer disabled:cursor-default"
+            className="w-full py-4 rounded-[12px] text-[18px] font-bold tracking-[0.025em] transition-all duration-250 cursor-pointer disabled:cursor-default"
             style={{
               background: formIsValid && !submitting ? '#C9922A' : '#222',
               color: formIsValid && !submitting ? '#1A1A1A' : '#3A3A3A',

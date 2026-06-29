@@ -31,8 +31,8 @@ export default function QueueList() {
   return (
     <div>
       <div className="flex items-center justify-between mb-3.5">
-        <p className="text-[10px] tracking-[0.2em] uppercase text-[#C9922A] font-semibold">Kön just nu</p>
-        <span className="text-xs text-[#3A3A3A] font-medium">{waitingCount} väntar</span>
+        <p className="text-[12px] tracking-[0.18em] uppercase text-[#C9922A] font-semibold">Kön just nu</p>
+        <span className="text-[14px] text-[#8A8276] font-medium">{waitingCount} väntar</span>
       </div>
 
       {entries.length > 0 ? (
@@ -48,12 +48,12 @@ export default function QueueList() {
               }}
             >
               <div
-                className="w-[34px] h-[34px] rounded-full shrink-0 flex items-center justify-center"
+                className="w-[38px] h-[38px] rounded-full shrink-0 flex items-center justify-center"
                 style={{
-                  background: isOnStage ? 'rgba(201,146,42,0.14)' : '#222',
-                  fontSize: isOnStage ? 16 : 11,
-                  fontWeight: 600,
-                  color: isOnStage ? '#C9922A' : '#3A3A3A',
+                  background: isOnStage ? 'rgba(201,146,42,0.14)' : '#262626',
+                  fontSize: isOnStage ? 17 : 15,
+                  fontWeight: 700,
+                  color: isOnStage ? '#C9922A' : '#9A9286',
                 }}
               >
                 {isOnStage ? '🎤' : i + 1}
@@ -61,9 +61,9 @@ export default function QueueList() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-[7px] flex-wrap">
                   <span style={{
-                    fontSize: 14,
-                    fontWeight: isOnStage ? 600 : 400,
-                    color: isOnStage ? '#F5F0E8' : '#666',
+                    fontSize: 16,
+                    fontWeight: isOnStage ? 700 : 500,
+                    color: isOnStage ? '#F5F0E8' : '#B0A899',
                   }}>
                     {e.name}
                   </span>
@@ -74,9 +74,9 @@ export default function QueueList() {
                   )}
                 </div>
                 <div style={{
-                  fontSize: 12,
-                  marginTop: 2,
-                  color: isOnStage ? '#C9922A' : '#3A3A3A',
+                  fontSize: 14,
+                  marginTop: 3,
+                  color: isOnStage ? '#C9922A' : '#857E72',
                 }}>
                   {e.song}
                 </div>
