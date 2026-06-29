@@ -1,22 +1,22 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase, QueueEntry } from '@/lib/supabase';
 import { getTodaySessionId } from '@/lib/session';
 import StatusScreen from '@/components/StatusScreen';
 import QueueList from '@/components/QueueList';
 import BottomBar from '@/components/BottomBar';
 
-type Song = { title: string; artist: string };
+type RepertoireSong = { title: string; artist: string };
+type SpotifyResult = { id: string; title: string; artist: string; albumArt: string | null };
 
 export default function GuestPage() {
-  const [songs, setSongs] = useState<Song[]>([]);
+  const [repertoire, setRepertoire] = useState<RepertoireSong[]>([]);
   const [name, setName] = useState(() => {
     if (typeof window !== 'undefined') return localStorage.getItem('os_name') || '';
     return '';
   });
   const [selectedSong, setSelectedSong] = useState('');
-  const [customSong, setCustomSong] = useState('');
   const [email, setEmail] = useState(() => {
     if (typeof window !== 'undefined') return localStorage.getItem('os_email') || '';
     return '';
@@ -29,25 +29,74 @@ export default function GuestPage() {
   const [entry, setEntry] = useState<QueueEntry | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
   const [confirmedDuplicate, setConfirmedDuplicate] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [songFilter, setSongFilter] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Spotify search state
+  const [songQuery, setSongQuery] = useState('');
+  const [spotifyResults, setSpotifyResults] = useState<SpotifyResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     fetch('/api/songs')
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setSongs(data); });
+      .then((data) => { if (Array.isArray(data)) setRepertoire(data); });
   }, []);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowResults(false);
       }
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  const searchSpotify = useCallback(async (query: string) => {
+    if (query.length < 2) { setSpotifyResults([]); return; }
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (Array.isArray(data)) setSpotifyResults(data);
+    } catch { /* ignore */ }
+    setSearching(false);
+  }, []);
+
+  const handleSongQueryChange = (value: string) => {
+    setSongQuery(value);
+    setSelectedSong('');
+    setShowResults(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchSpotify(value), 300);
+  };
+
+  const isInRepertoire = (title: string, artist: string): boolean => {
+    const normalize = (s: string) => s.toLowerCase().replace(/[^a-zåäö0-9]/g, '');
+    return repertoire.some(
+      (r) => normalize(r.title) === normalize(title) ||
+        (normalize(r.title).includes(normalize(title)) && normalize(r.artist).includes(normalize(artist)))
+    );
+  };
+
+  const selectResult = (result: SpotifyResult) => {
+    const label = `${result.artist} — ${result.title}`;
+    setSelectedSong(label);
+    setSongQuery(label);
+    setShowResults(false);
+    setSpotifyResults([]);
+    checkDuplicate(label);
+  };
+
+  const clearSelection = () => {
+    setSelectedSong('');
+    setSongQuery('');
+    setSpotifyResults([]);
+    setDuplicateWarning(false);
+    setConfirmedDuplicate(false);
+  };
 
   const checkDuplicate = async (songValue: string) => {
     if (!songValue) { setDuplicateWarning(false); return; }
@@ -62,26 +111,19 @@ export default function GuestPage() {
     setConfirmedDuplicate(false);
   };
 
-  const selectSong = (label: string) => {
-    setSelectedSong(label);
-    setShowDropdown(false);
-    setSongFilter('');
-    checkDuplicate(label);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     if (duplicateWarning && !confirmedDuplicate) return;
 
     setSubmitting(true);
-    const songValue = customSong.trim() || selectedSong || 'Valfri / Any song';
+    const songValue = selectedSong || songQuery.trim() || 'Valfri / Any song';
     const { data, error } = await supabase
       .from('queue_entries')
       .insert({
         name: name.trim(),
         song: songValue,
-        custom_song: customSong.trim() || null,
+        custom_song: !selectedSong && songQuery.trim() ? songQuery.trim() : null,
         email: email.trim() || null,
         video_consent: videoConsent,
         session_id: getTodaySessionId(),
@@ -101,18 +143,9 @@ export default function GuestPage() {
   if (entry) {
     return <StatusScreen entry={entry} onBack={() => {
       setEntry(null);
-      setSelectedSong('');
-      setCustomSong('');
-      setDuplicateWarning(false);
-      setConfirmedDuplicate(false);
+      clearSelection();
     }} />;
   }
-
-  const filteredSongs = songFilter
-    ? songs.filter(s =>
-        `${s.title} ${s.artist}`.toLowerCase().includes(songFilter.toLowerCase())
-      )
-    : songs;
 
   const formIsValid = !!name.trim() && (!duplicateWarning || confirmedDuplicate);
 
@@ -164,21 +197,35 @@ export default function GuestPage() {
             />
           </div>
 
-          {/* Song dropdown */}
-          <div className="mb-[15px] relative z-[45]" ref={dropdownRef}>
-            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">Välj låt</label>
-            <button
-              type="button"
-              onClick={() => setShowDropdown(!showDropdown)}
-              className={`w-full px-3.5 py-3 bg-[#2A2A2A] border rounded-[9px] text-[15px] cursor-pointer flex items-center justify-between outline-none transition ${
-                selectedSong ? 'border-[#C9922A] text-[#F5F0E8]' : 'border-[#444] text-[#666]'
-              }`}
-            >
-              <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-left">
-                {selectedSong || 'Välj en låt...'}
-              </span>
-              <span className="text-[#888] text-[11px] shrink-0 ml-2">▾</span>
-            </button>
+          {/* Song search (Spotify + BandHelper) */}
+          <div className="mb-[15px] relative z-[45]" ref={searchRef}>
+            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">
+              Sök låt
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={songQuery}
+                onChange={(e) => handleSongQueryChange(e.target.value)}
+                onFocus={() => { if (songQuery.length >= 2 && !selectedSong) setShowResults(true); }}
+                placeholder="Sök artist eller låt..."
+                className={`w-full px-3.5 py-3 bg-[#2A2A2A] border rounded-[9px] text-[#F5F0E8] text-[15px] outline-none transition placeholder:text-[#666] ${
+                  selectedSong ? 'border-[#C9922A]' : 'border-[#444] focus:border-[#C9922A]'
+                }`}
+              />
+              {selectedSong && (
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666] hover:text-[#F5F0E8] transition text-lg leading-none"
+                >
+                  ✕
+                </button>
+              )}
+              {searching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#C9922A] border-t-transparent rounded-full animate-spin" />
+              )}
+            </div>
 
             {duplicateWarning && (
               <div className="mt-[7px] flex items-center gap-1.5 text-[#E05A2B] text-xs" style={{ animation: 'slide-down 0.25s ease' }}>
@@ -190,47 +237,51 @@ export default function GuestPage() {
               </div>
             )}
 
-            {showDropdown && (
-              <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-[#1C1C1C] border border-[#C9922A] rounded-xl max-h-[260px] overflow-y-auto z-50 shadow-[0_14px_48px_rgba(0,0,0,0.75)]"
+            {showResults && !selectedSong && songQuery.length >= 2 && (
+              <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-[#1C1C1C] border border-[#C9922A] rounded-xl max-h-[320px] overflow-y-auto z-50 shadow-[0_14px_48px_rgba(0,0,0,0.75)]"
                 style={{ animation: 'slide-down 0.2s ease' }}>
-                <div className="sticky top-0 bg-[#1C1C1C] p-2 border-b border-white/5">
-                  <input
-                    type="text"
-                    value={songFilter}
-                    onChange={(e) => setSongFilter(e.target.value)}
-                    placeholder="Sök låt..."
-                    className="w-full px-3 py-2 bg-[#252525] border border-[#444] rounded-lg text-sm text-[#F5F0E8] outline-none placeholder:text-[#666]"
-                    autoFocus
-                  />
-                </div>
-                {filteredSongs.map((s) => {
-                  const label = `${s.title} — ${s.artist}`;
-                  return (
-                    <div
-                      key={label}
-                      onClick={() => selectSong(label)}
-                      className="px-4 py-[11px] cursor-pointer border-b border-white/[0.03] text-sm text-[#E8E2D8] hover:bg-white/5 transition"
-                    >
-                      {label}
-                    </div>
-                  );
-                })}
+                {spotifyResults.length > 0 ? (
+                  spotifyResults.map((r) => {
+                    const onStage = isInRepertoire(r.title, r.artist);
+                    return (
+                      <div
+                        key={r.id}
+                        onClick={() => selectResult(r)}
+                        className="px-3.5 py-[11px] cursor-pointer border-b border-white/[0.03] hover:bg-white/5 transition flex items-center gap-3"
+                      >
+                        {r.albumArt && (
+                          <img
+                            src={r.albumArt}
+                            alt=""
+                            className="w-10 h-10 rounded-[5px] shrink-0 object-cover"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-[#F5F0E8] font-medium truncate">{r.title}</div>
+                          <div className="text-xs text-[#666] truncate">{r.artist}</div>
+                        </div>
+                        <span className={`text-[9px] font-bold px-2 py-[3px] rounded-[4px] whitespace-nowrap shrink-0 ${
+                          onStage
+                            ? 'bg-[rgba(0,200,83,0.12)] text-[#00C853] border border-[rgba(0,200,83,0.25)]'
+                            : 'bg-[rgba(100,140,255,0.1)] text-[#7B9FFF] border border-[rgba(100,140,255,0.2)]'
+                        }`}>
+                          {onStage ? 'Ready on Stage 🎸' : 'Request via Jamzone 🎧'}
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : searching ? (
+                  <div className="px-4 py-6 text-center text-[#555] text-sm">
+                    <div className="w-5 h-5 border-2 border-[#C9922A] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    Söker...
+                  </div>
+                ) : (
+                  <div className="px-4 py-5 text-center text-[#555] text-sm">
+                    Inga resultat — prova ett annat sökord
+                  </div>
+                )}
               </div>
             )}
-          </div>
-
-          {/* Custom song */}
-          <div className="mb-[15px]">
-            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">
-              Valfri sång <span className="font-normal normal-case tracking-normal text-[#777] text-[11px]">(om din låt inte finns i listan)</span>
-            </label>
-            <input
-              type="text"
-              value={customSong}
-              onChange={(e) => setCustomSong(e.target.value)}
-              placeholder="Titel – Artist"
-              className="w-full px-3.5 py-3 bg-[#2A2A2A] border border-[#444] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#C9922A] transition placeholder:text-[#666]"
-            />
           </div>
 
           {/* Email */}
