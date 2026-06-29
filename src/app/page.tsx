@@ -87,7 +87,16 @@ export default function GuestPage() {
   };
 
   if (entry) {
-    return <StatusScreen entry={entry} />;
+    return <StatusScreen entry={entry} onBack={() => {
+      setEntry(null);
+      setName('');
+      setSelectedSong('');
+      setCustomSong('');
+      setEmail('');
+      setVideoConsent(false);
+      setDuplicateWarning(false);
+      setConfirmedDuplicate(false);
+    }} />;
   }
 
   const filteredSongs = songFilter

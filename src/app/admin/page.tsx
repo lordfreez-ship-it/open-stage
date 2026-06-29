@@ -13,6 +13,8 @@ export default function AdminPage() {
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [entries, setEntries] = useState<QueueEntry[]>([]);
+  const [history, setHistory] = useState<QueueEntry[]>([]);
+  const [tab, setTab] = useState<'queue' | 'history'>('queue');
 
   const fetchQueue = useCallback(async () => {
     const { data } = await supabase
@@ -24,15 +26,26 @@ export default function AdminPage() {
     if (data) setEntries(data as QueueEntry[]);
   }, []);
 
+  const fetchHistory = useCallback(async () => {
+    const { data } = await supabase
+      .from('queue_entries')
+      .select('*')
+      .eq('session_id', getTodaySessionId())
+      .in('status', ['done', 'skipped'])
+      .order('created_at', { ascending: false });
+    if (data) setHistory(data as QueueEntry[]);
+  }, []);
+
   useEffect(() => {
     if (!authenticated) return;
     fetchQueue();
+    fetchHistory();
     const channel = supabase
       .channel('admin-queue')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_entries' }, () => { fetchQueue(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_entries' }, () => { fetchQueue(); fetchHistory(); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [authenticated, fetchQueue]);
+  }, [authenticated, fetchQueue, fetchHistory]);
 
   const pressPin = (digit: string) => {
     setPinError(false);
@@ -158,8 +171,34 @@ export default function AdminPage() {
         </div>
       </header>
 
+      {/* Tab switcher */}
+      <div className="flex px-3.5 pt-3.5 gap-2">
+        <button
+          onClick={() => setTab('queue')}
+          className="flex-1 py-2.5 rounded-lg text-xs font-bold tracking-[0.04em] transition-all"
+          style={{
+            background: tab === 'queue' ? 'rgba(201,146,42,0.12)' : 'transparent',
+            color: tab === 'queue' ? '#C9922A' : '#3A3A3A',
+            border: `1px solid ${tab === 'queue' ? 'rgba(201,146,42,0.28)' : '#222'}`,
+          }}
+        >
+          🎤 Kö ({entries.length})
+        </button>
+        <button
+          onClick={() => setTab('history')}
+          className="flex-1 py-2.5 rounded-lg text-xs font-bold tracking-[0.04em] transition-all"
+          style={{
+            background: tab === 'history' ? 'rgba(201,146,42,0.12)' : 'transparent',
+            color: tab === 'history' ? '#C9922A' : '#3A3A3A',
+            border: `1px solid ${tab === 'history' ? 'rgba(201,146,42,0.28)' : '#222'}`,
+          }}
+        >
+          📋 Historik ({history.length})
+        </button>
+      </div>
+
       {/* Queue cards */}
-      <div className="px-3.5 pt-[18px] pb-[52px]">
+      {tab === 'queue' && <div className="px-3.5 pt-[18px] pb-[52px]">
         {entries.length > 0 ? (
           entries.map((e) => {
             const isOnStage = e.status === 'your_turn';
@@ -183,7 +222,11 @@ export default function AdminPage() {
                     <div>
                       <div className="font-semibold text-[#F5F0E8] text-[15px] flex items-center gap-2 leading-[1.2]">
                         {e.name}
-                        {e.video_consent && <span className="text-[13px]" title="Videoinspelning godkänd">🎥</span>}
+                        {e.video_consent ? (
+                          <span className="text-[9px] bg-[rgba(0,200,83,0.12)] text-[#00C853] border border-[rgba(0,200,83,0.25)] px-1.5 py-[2px] rounded font-bold tracking-[0.04em]">🎥 OK</span>
+                        ) : (
+                          <span className="text-[9px] bg-[rgba(255,60,60,0.08)] text-[#FF4444] border border-[rgba(255,60,60,0.2)] px-1.5 py-[2px] rounded font-bold tracking-[0.04em]">🚫 Nej</span>
+                        )}
                       </div>
                       <div className="text-xs text-[#4A4A4A] mt-0.5">
                         {e.song}
@@ -252,7 +295,76 @@ export default function AdminPage() {
             🔒 Lås admin
           </a>
         </div>
-      </div>
+      </div>}
+
+      {/* History view */}
+      {tab === 'history' && <div className="px-3.5 pt-[18px] pb-[52px]">
+        {history.length > 0 ? (
+          history.map((e) => {
+            const createdTime = new Date(e.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Stockholm' });
+            const recordedTime = e.recorded_at
+              ? new Date(e.recorded_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Stockholm' })
+              : null;
+            return (
+              <div
+                key={e.id}
+                className="rounded-[14px] p-4 mb-3"
+                style={{
+                  background: '#202020',
+                  border: `1px solid ${e.status === 'skipped' ? '#2A1A1A' : '#272727'}`,
+                  opacity: e.status === 'skipped' ? 0.6 : 1,
+                }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-[11px]">
+                    <div className="w-10 h-10 rounded-full bg-[rgba(201,146,42,0.1)] border border-[rgba(201,146,42,0.22)] flex items-center justify-center font-[family-name:var(--font-playfair)] font-extrabold text-[#C9922A] text-sm shrink-0">
+                      {getInitials(e.name)}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-[#F5F0E8] text-[15px] flex items-center gap-2 leading-[1.2]">
+                        {e.name}
+                        {e.video_consent ? (
+                          <span className="text-[9px] bg-[rgba(0,200,83,0.12)] text-[#00C853] border border-[rgba(0,200,83,0.25)] px-1.5 py-[2px] rounded font-bold">🎥 OK</span>
+                        ) : (
+                          <span className="text-[9px] bg-[rgba(255,60,60,0.08)] text-[#FF4444] border border-[rgba(255,60,60,0.2)] px-1.5 py-[2px] rounded font-bold">🚫 Nej</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-[#4A4A4A] mt-0.5">{e.song}</div>
+                    </div>
+                  </div>
+                  <span className={`text-[11px] font-semibold px-[11px] py-1 rounded-[20px] ${
+                    e.status === 'skipped'
+                      ? 'bg-[rgba(255,60,60,0.08)] text-[#FF4444] border border-[rgba(255,60,60,0.15)]'
+                      : 'bg-[rgba(0,200,83,0.08)] text-[#00C853] border border-[rgba(0,200,83,0.2)]'
+                  }`}>
+                    {e.status === 'skipped' ? '⏭ Hoppade' : '✓ Klar'}
+                  </span>
+                </div>
+
+                {/* Timestamps */}
+                <div className="flex gap-4 mt-2.5 pt-2.5 border-t border-[#2A2A2A]">
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
+                    <span className="text-[#3A3A3A]">📋</span>
+                    <span>Anmäld: <span className="text-[#888] font-medium">{createdTime}</span></span>
+                  </div>
+                  {recordedTime && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
+                      <span className="text-[#C1440E]">⏺</span>
+                      <span>Inspelad: <span className="text-[#C9922A] font-medium">{recordedTime}</span></span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center py-[72px] px-5 text-[#282828]">
+            <div className="text-[52px] mb-4">📋</div>
+            <div className="font-[family-name:var(--font-playfair)] text-[#383838] text-lg mb-1.5">Ingen historik än</div>
+            <div className="text-[13px] text-[#262626]">Avslutade uppträdanden visas här</div>
+          </div>
+        )}
+      </div>}
     </div>
   );
 }

@@ -8,7 +8,7 @@ const SWISH_NUMBER = process.env.NEXT_PUBLIC_SWISH_NUMBER || '';
 const FACEBOOK_URL = process.env.NEXT_PUBLIC_FACEBOOK_URL || '';
 const YOUTUBE_URL = process.env.NEXT_PUBLIC_YOUTUBE_URL || '';
 
-export default function StatusScreen({ entry: initial }: { entry: QueueEntry }) {
+export default function StatusScreen({ entry: initial, onBack }: { entry: QueueEntry; onBack: () => void }) {
   const [entry, setEntry] = useState(initial);
 
   useEffect(() => {
@@ -41,6 +41,10 @@ export default function StatusScreen({ entry: initial }: { entry: QueueEntry }) 
         <p className="text-[15px] text-black/50 max-w-[280px] leading-[1.65] font-medium">
           Förbered dig — det är snart dags att ta scenen. Håll ögonen på skärmen!
         </p>
+        <button onClick={onBack}
+          className="mt-10 bg-black/10 border border-black/15 text-black/50 rounded-[10px] py-3 px-6 text-[13px] cursor-pointer font-semibold">
+          ← Tillbaka till start
+        </button>
       </div>
     );
   }
@@ -60,6 +64,10 @@ export default function StatusScreen({ entry: initial }: { entry: QueueEntry }) 
         <p className="text-base text-black/[0.55] max-w-[240px] leading-[1.55] font-semibold">
           Gå upp på scen och visa vad du går för! 🔥
         </p>
+        <button onClick={onBack}
+          className="mt-10 bg-black/10 border border-black/15 text-black/50 rounded-[10px] py-3 px-6 text-[13px] cursor-pointer font-semibold">
+          ← Tillbaka till start
+        </button>
       </div>
     );
   }
@@ -96,9 +104,9 @@ export default function StatusScreen({ entry: initial }: { entry: QueueEntry }) 
               YouTube
             </a>
           </div>
-          <button onClick={() => window.location.reload()}
+          <button onClick={onBack}
             className="bg-transparent border border-[#1E1E1E] text-[#3A3A3A] rounded-[10px] py-3 text-[13px] cursor-pointer mt-1">
-            Anmäl dig igen
+            🎤 Sjung en till!
           </button>
         </div>
       </div>
@@ -120,6 +128,10 @@ export default function StatusScreen({ entry: initial }: { entry: QueueEntry }) 
       <p className="text-[15px] text-[#555] max-w-[280px] leading-[1.7]">
         Vi meddelar dig när det är dags. Håll koll på skärmen — du behöver inte göra något mer.
       </p>
+      <button onClick={onBack}
+        className="mt-10 bg-transparent border border-[#1E1E1E] text-[#3A3A3A] rounded-[10px] py-3 px-6 text-[13px] cursor-pointer">
+        ← Tillbaka till start
+      </button>
     </div>
   );
 }
