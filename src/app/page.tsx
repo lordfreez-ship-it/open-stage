@@ -137,7 +137,7 @@ export default function GuestPage() {
         <h2 className="font-[family-name:var(--font-playfair)] text-[26px] font-extrabold text-[#F5F0E8] leading-[1.2] mb-1.5">
           Kliv upp på scen!
         </h2>
-        <p className="text-[13px] text-[#555] mb-6 leading-[1.5]">
+        <p className="text-[13px] text-[#888] mb-6 leading-[1.5]">
           Fyll i nedan och välj din låt — vi kallar på dig när det är dags.
         </p>
 
@@ -145,30 +145,30 @@ export default function GuestPage() {
         <form onSubmit={handleSubmit} className="bg-[#242424] rounded-2xl p-[22px] border border-[#282828] mb-9">
           {/* Name */}
           <div className="mb-[15px]">
-            <label className="block text-[10px] font-bold tracking-[0.12em] uppercase text-[#555] mb-[7px]">Namn</label>
+            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">Namn</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Namn"
-              className="w-full px-3.5 py-3 bg-[#1C1C1C] border border-[#2A2A2A] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#3A3A3A] transition placeholder:text-[#3A3A3A]"
+              className="w-full px-3.5 py-3 bg-[#2A2A2A] border border-[#444] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#C9922A] transition placeholder:text-[#666]"
             />
           </div>
 
           {/* Song dropdown */}
           <div className="mb-[15px] relative z-[45]" ref={dropdownRef}>
-            <label className="block text-[10px] font-bold tracking-[0.12em] uppercase text-[#555] mb-[7px]">Välj låt</label>
+            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">Välj låt</label>
             <button
               type="button"
               onClick={() => setShowDropdown(!showDropdown)}
-              className={`w-full px-3.5 py-3 bg-[#1C1C1C] border rounded-[9px] text-[15px] cursor-pointer flex items-center justify-between outline-none transition ${
-                selectedSong ? 'border-[#C9922A] text-[#F5F0E8]' : 'border-[#2A2A2A] text-[#3A3A3A]'
+              className={`w-full px-3.5 py-3 bg-[#2A2A2A] border rounded-[9px] text-[15px] cursor-pointer flex items-center justify-between outline-none transition ${
+                selectedSong ? 'border-[#C9922A] text-[#F5F0E8]' : 'border-[#444] text-[#666]'
               }`}
             >
               <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-left">
                 {selectedSong || 'Välj en låt...'}
               </span>
-              <span className="text-[#555] text-[11px] shrink-0 ml-2">▾</span>
+              <span className="text-[#888] text-[11px] shrink-0 ml-2">▾</span>
             </button>
 
             {duplicateWarning && (
@@ -190,7 +190,7 @@ export default function GuestPage() {
                     value={songFilter}
                     onChange={(e) => setSongFilter(e.target.value)}
                     placeholder="Sök låt..."
-                    className="w-full px-3 py-2 bg-[#151515] border border-[#2A2A2A] rounded-lg text-sm text-[#F5F0E8] outline-none placeholder:text-[#3A3A3A]"
+                    className="w-full px-3 py-2 bg-[#252525] border border-[#444] rounded-lg text-sm text-[#F5F0E8] outline-none placeholder:text-[#666]"
                     autoFocus
                   />
                 </div>
@@ -212,29 +212,29 @@ export default function GuestPage() {
 
           {/* Custom song */}
           <div className="mb-[15px]">
-            <label className="block text-[10px] font-bold tracking-[0.12em] uppercase text-[#555] mb-[7px]">
-              Valfri sång <span className="font-normal normal-case tracking-normal text-[#3A3A3A] text-[11px]">(om din låt inte finns i listan)</span>
+            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">
+              Valfri sång <span className="font-normal normal-case tracking-normal text-[#777] text-[11px]">(om din låt inte finns i listan)</span>
             </label>
             <input
               type="text"
               value={customSong}
               onChange={(e) => setCustomSong(e.target.value)}
               placeholder="Titel – Artist"
-              className="w-full px-3.5 py-3 bg-[#1C1C1C] border border-[#2A2A2A] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#3A3A3A] transition placeholder:text-[#3A3A3A]"
+              className="w-full px-3.5 py-3 bg-[#2A2A2A] border border-[#444] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#C9922A] transition placeholder:text-[#666]"
             />
           </div>
 
           {/* Email */}
           <div className="mb-[15px]">
-            <label className="block text-[10px] font-bold tracking-[0.12em] uppercase text-[#555] mb-[7px]">
-              E-post <span className="font-normal normal-case tracking-normal text-[#3A3A3A]">(bekräftelse)</span>
+            <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">
+              E-post <span className="font-normal normal-case tracking-normal text-[#777]">(bekräftelse)</span>
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="din@email.se"
-              className="w-full px-3.5 py-3 bg-[#1C1C1C] border border-[#2A2A2A] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#3A3A3A] transition placeholder:text-[#3A3A3A]"
+              className="w-full px-3.5 py-3 bg-[#2A2A2A] border border-[#444] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#C9922A] transition placeholder:text-[#666]"
             />
           </div>
 
@@ -246,7 +246,7 @@ export default function GuestPage() {
               onChange={(e) => setVideoConsent(e.target.checked)}
               className="mt-0.5 shrink-0 w-[18px] h-[18px] accent-[#C9922A] cursor-pointer"
             />
-            <label className="text-xs text-[#666] leading-[1.6] cursor-pointer">
+            <label className="text-xs text-[#999] leading-[1.6] cursor-pointer">
               Jag godkänner att mitt uppträdande kan filmas och publiceras på DC&apos;s kanaler.{' '}
               <span className="text-[#C9922A] font-medium">🎥 Videoinspelning OK</span>
             </label>
