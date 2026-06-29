@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "open-stage",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "--port", "3333"],
+      "port": 3333
+    }
+  ]
+}

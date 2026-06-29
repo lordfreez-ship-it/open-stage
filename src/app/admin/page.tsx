@@ -151,7 +151,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-[#1A1A1A] max-w-[480px] md:max-w-[720px] lg:max-w-[900px] mx-auto">
       {/* Admin header */}
-      <header className="sticky top-0 z-50 backdrop-blur-[18px] border-b border-[#1E1E1E] px-4 py-3"
+      <header className="sticky top-0 z-50 backdrop-blur-[18px] border-b border-[#1E1E1E] px-4 md:px-6 py-3 md:py-4"
         style={{ background: 'rgba(14,14,14,0.98)' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-[7px]">
@@ -160,9 +160,10 @@ export default function AdminPage() {
             <span className="text-[11px] text-[#3A3A3A] font-medium tracking-[0.06em]">Live</span>
           </div>
           <div className="text-center">
-            <div className="font-[family-name:var(--font-playfair)] font-black text-[17px] tracking-[0.12em] uppercase text-[#C9922A] leading-[1.1]">
+            <div className="font-[family-name:var(--font-playfair)] font-black text-[17px] md:text-xl tracking-[0.12em] uppercase text-[#C9922A] leading-[1.1]">
               OPEN STAGE
             </div>
+            <div className="font-[family-name:var(--font-dancing)] font-bold text-xs md:text-sm text-[#C1440E]">with Demir</div>
             <div className="text-[9px] text-[#3A3A3A] tracking-[0.14em] uppercase font-semibold">Admin</div>
           </div>
           <div className="bg-[rgba(201,146,42,0.09)] border border-[rgba(201,146,42,0.22)] rounded-[20px] px-[13px] py-1">
@@ -172,10 +173,10 @@ export default function AdminPage() {
       </header>
 
       {/* Tab switcher */}
-      <div className="flex px-3.5 pt-3.5 gap-2">
+      <div className="flex px-3.5 md:px-6 pt-3.5 md:pt-5 gap-2 md:gap-3">
         <button
           onClick={() => setTab('queue')}
-          className="flex-1 py-2.5 rounded-lg text-xs font-bold tracking-[0.04em] transition-all"
+          className="flex-1 py-2.5 md:py-3.5 rounded-lg text-xs md:text-sm font-bold tracking-[0.04em] transition-all"
           style={{
             background: tab === 'queue' ? 'rgba(201,146,42,0.12)' : 'transparent',
             color: tab === 'queue' ? '#C9922A' : '#3A3A3A',
@@ -186,7 +187,7 @@ export default function AdminPage() {
         </button>
         <button
           onClick={() => setTab('history')}
-          className="flex-1 py-2.5 rounded-lg text-xs font-bold tracking-[0.04em] transition-all"
+          className="flex-1 py-2.5 md:py-3.5 rounded-lg text-xs md:text-sm font-bold tracking-[0.04em] transition-all"
           style={{
             background: tab === 'history' ? 'rgba(201,146,42,0.12)' : 'transparent',
             color: tab === 'history' ? '#C9922A' : '#3A3A3A',
@@ -198,7 +199,7 @@ export default function AdminPage() {
       </div>
 
       {/* Queue cards */}
-      {tab === 'queue' && <div className="px-3.5 pt-[18px] pb-[52px]">
+      {tab === 'queue' && <div className="px-3.5 md:px-6 pt-[18px] md:pt-6 pb-[52px]">
         {entries.length > 0 ? (
           entries.map((e) => {
             const isOnStage = e.status === 'your_turn';
@@ -206,7 +207,7 @@ export default function AdminPage() {
             return (
               <div
                 key={e.id}
-                className="rounded-[14px] p-4 mb-3"
+                className="rounded-[14px] p-4 md:p-5 mb-3 md:mb-4"
                 style={{
                   background: '#202020',
                   border: `1px solid ${isOnStage ? '#C9922A' : '#272727'}`,
@@ -248,7 +249,7 @@ export default function AdminPage() {
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex gap-[7px] flex-wrap">
+                <div className="flex gap-[7px] md:gap-2.5 flex-wrap">
                   <button onClick={() => updateStatus(e.id, 'waiting')}
                     className="flex-1 bg-[rgba(201,146,42,0.12)] text-[#C9922A] border border-[rgba(201,146,42,0.28)] rounded-lg py-[9px] px-1 text-xs font-bold cursor-pointer min-w-[72px] whitespace-nowrap">
                     📣 Nästa
@@ -298,7 +299,7 @@ export default function AdminPage() {
       </div>}
 
       {/* History view */}
-      {tab === 'history' && <div className="px-3.5 pt-[18px] pb-[52px]">
+      {tab === 'history' && <div className="px-3.5 md:px-6 pt-[18px] md:pt-6 pb-[52px]">
         {history.length > 0 ? (
           (() => {
             const grouped: Record<string, QueueEntry[]> = {};

@@ -13,7 +13,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Open Stage with Demir",
+  title: "OPEN STAGE with DEMIR",
   description: "Kliv upp på scen! Sign up to perform at Open Stage.",
   manifest: "/manifest.json",
   appleWebApp: {
