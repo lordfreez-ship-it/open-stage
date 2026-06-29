@@ -15,5 +15,6 @@ export type QueueEntry = {
   video_consent: boolean;
   status: 'registered' | 'waiting' | 'your_turn' | 'done' | 'skipped';
   recorded_at: string | null;
+  video_requested: boolean;
   session_id: string;
 };

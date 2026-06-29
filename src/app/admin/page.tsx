@@ -30,8 +30,8 @@ export default function AdminPage() {
     const { data } = await supabase
       .from('queue_entries')
       .select('*')
-      .eq('session_id', getTodaySessionId())
       .in('status', ['done', 'skipped'])
+      .order('session_id', { ascending: false })
       .order('created_at', { ascending: false });
     if (data) setHistory(data as QueueEntry[]);
   }, []);
@@ -300,63 +300,88 @@ export default function AdminPage() {
       {/* History view */}
       {tab === 'history' && <div className="px-3.5 pt-[18px] pb-[52px]">
         {history.length > 0 ? (
-          history.map((e) => {
-            const createdTime = new Date(e.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Stockholm' });
-            const recordedTime = e.recorded_at
-              ? new Date(e.recorded_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Stockholm' })
-              : null;
-            return (
-              <div
-                key={e.id}
-                className="rounded-[14px] p-4 mb-3"
-                style={{
-                  background: '#202020',
-                  border: `1px solid ${e.status === 'skipped' ? '#2A1A1A' : '#272727'}`,
-                  opacity: e.status === 'skipped' ? 0.6 : 1,
-                }}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-[11px]">
-                    <div className="w-10 h-10 rounded-full bg-[rgba(201,146,42,0.1)] border border-[rgba(201,146,42,0.22)] flex items-center justify-center font-[family-name:var(--font-playfair)] font-extrabold text-[#C9922A] text-sm shrink-0">
-                      {getInitials(e.name)}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-[#F5F0E8] text-[15px] flex items-center gap-2 leading-[1.2]">
-                        {e.name}
-                        {e.video_consent ? (
-                          <span className="text-[9px] bg-[rgba(0,200,83,0.12)] text-[#00C853] border border-[rgba(0,200,83,0.25)] px-1.5 py-[2px] rounded font-bold">🎥 OK</span>
-                        ) : (
-                          <span className="text-[9px] bg-[rgba(255,60,60,0.08)] text-[#FF4444] border border-[rgba(255,60,60,0.2)] px-1.5 py-[2px] rounded font-bold">🚫 Nej</span>
+          (() => {
+            const grouped: Record<string, QueueEntry[]> = {};
+            history.forEach((e) => {
+              if (!grouped[e.session_id]) grouped[e.session_id] = [];
+              grouped[e.session_id].push(e);
+            });
+            return Object.entries(grouped).map(([sessionId, items]) => (
+              <div key={sessionId} className="mb-6">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="text-[11px] font-bold tracking-[0.1em] uppercase text-[#C9922A] whitespace-nowrap">📅 {sessionId}</div>
+                  <div className="flex-1 h-px bg-[#2A2A2A]" />
+                  <div className="text-[10px] text-[#444] whitespace-nowrap">{items.length} st</div>
+                </div>
+                {items.map((e) => {
+                  const createdTime = new Date(e.created_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Stockholm' });
+                  const recordedTime = e.recorded_at
+                    ? new Date(e.recorded_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Stockholm' })
+                    : null;
+                  return (
+                    <div
+                      key={e.id}
+                      className="rounded-[14px] p-4 mb-3"
+                      style={{
+                        background: '#202020',
+                        border: `1px solid ${e.status === 'skipped' ? '#2A1A1A' : '#272727'}`,
+                        opacity: e.status === 'skipped' ? 0.6 : 1,
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-[11px]">
+                          <div className="w-10 h-10 rounded-full bg-[rgba(201,146,42,0.1)] border border-[rgba(201,146,42,0.22)] flex items-center justify-center font-[family-name:var(--font-playfair)] font-extrabold text-[#C9922A] text-sm shrink-0">
+                            {getInitials(e.name)}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-[#F5F0E8] text-[15px] flex items-center gap-2 leading-[1.2] flex-wrap">
+                              {e.name}
+                              {e.video_consent ? (
+                                <span className="text-[9px] bg-[rgba(0,200,83,0.12)] text-[#00C853] border border-[rgba(0,200,83,0.25)] px-1.5 py-[2px] rounded font-bold">🎥 OK</span>
+                              ) : (
+                                <span className="text-[9px] bg-[rgba(255,60,60,0.08)] text-[#FF4444] border border-[rgba(255,60,60,0.2)] px-1.5 py-[2px] rounded font-bold">🚫 Nej</span>
+                              )}
+                              {e.video_requested && (
+                                <span className="text-[9px] bg-[rgba(100,140,255,0.1)] text-[#7B9FFF] border border-[rgba(100,140,255,0.25)] px-1.5 py-[2px] rounded font-bold">📨 Vill ha video</span>
+                              )}
+                            </div>
+                            <div className="text-xs text-[#4A4A4A] mt-0.5">{e.song}</div>
+                          </div>
+                        </div>
+                        <span className={`text-[11px] font-semibold px-[11px] py-1 rounded-[20px] shrink-0 ${
+                          e.status === 'skipped'
+                            ? 'bg-[rgba(255,60,60,0.08)] text-[#FF4444] border border-[rgba(255,60,60,0.15)]'
+                            : 'bg-[rgba(0,200,83,0.08)] text-[#00C853] border border-[rgba(0,200,83,0.2)]'
+                        }`}>
+                          {e.status === 'skipped' ? '⏭ Hoppade' : '✓ Klar'}
+                        </span>
+                      </div>
+
+                      {/* Timestamps */}
+                      <div className="flex gap-4 mt-2.5 pt-2.5 border-t border-[#2A2A2A] flex-wrap">
+                        <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
+                          <span className="text-[#3A3A3A]">📋</span>
+                          <span>Anmäld: <span className="text-[#888] font-medium">{createdTime}</span></span>
+                        </div>
+                        {recordedTime && (
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
+                            <span className="text-[#C1440E]">⏺</span>
+                            <span>Inspelad: <span className="text-[#C9922A] font-medium">{recordedTime}</span></span>
+                          </div>
+                        )}
+                        {e.email && (
+                          <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
+                            <span>✉</span>
+                            <span className="text-[#888] font-medium">{e.email}</span>
+                          </div>
                         )}
                       </div>
-                      <div className="text-xs text-[#4A4A4A] mt-0.5">{e.song}</div>
                     </div>
-                  </div>
-                  <span className={`text-[11px] font-semibold px-[11px] py-1 rounded-[20px] ${
-                    e.status === 'skipped'
-                      ? 'bg-[rgba(255,60,60,0.08)] text-[#FF4444] border border-[rgba(255,60,60,0.15)]'
-                      : 'bg-[rgba(0,200,83,0.08)] text-[#00C853] border border-[rgba(0,200,83,0.2)]'
-                  }`}>
-                    {e.status === 'skipped' ? '⏭ Hoppade' : '✓ Klar'}
-                  </span>
-                </div>
-
-                {/* Timestamps */}
-                <div className="flex gap-4 mt-2.5 pt-2.5 border-t border-[#2A2A2A]">
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
-                    <span className="text-[#3A3A3A]">📋</span>
-                    <span>Anmäld: <span className="text-[#888] font-medium">{createdTime}</span></span>
-                  </div>
-                  {recordedTime && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#555]">
-                      <span className="text-[#C1440E]">⏺</span>
-                      <span>Inspelad: <span className="text-[#C9922A] font-medium">{recordedTime}</span></span>
-                    </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-            );
-          })
+            ));
+          })()
         ) : (
           <div className="text-center py-[72px] px-5 text-[#282828]">
             <div className="text-[52px] mb-4">📋</div>

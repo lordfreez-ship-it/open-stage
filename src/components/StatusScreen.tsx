@@ -10,6 +10,9 @@ const YOUTUBE_URL = process.env.NEXT_PUBLIC_YOUTUBE_URL || '';
 
 export default function StatusScreen({ entry: initial, onBack }: { entry: QueueEntry; onBack: () => void }) {
   const [entry, setEntry] = useState(initial);
+  const [videoRequested, setVideoRequested] = useState(initial.video_requested);
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [videoEmail, setVideoEmail] = useState('');
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   const requestWakeLock = useCallback(async () => {
@@ -92,6 +95,24 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
     );
   }
 
+  const requestVideo = async () => {
+    if (entry.email) {
+      await supabase.from('queue_entries').update({ video_requested: true }).eq('id', entry.id);
+      setVideoRequested(true);
+    } else {
+      setShowEmailInput(true);
+    }
+  };
+
+  const submitVideoEmail = async () => {
+    const trimmed = videoEmail.trim();
+    if (!trimmed) return;
+    await supabase.from('queue_entries').update({ email: trimmed, video_requested: true }).eq('id', entry.id);
+    localStorage.setItem('os_email', trimmed);
+    setVideoRequested(true);
+    setShowEmailInput(false);
+  };
+
   if (entry.status === 'done') {
     return (
       <div className="min-h-screen bg-[#1C1409] flex flex-col items-center justify-center px-6 py-10 text-center"
@@ -106,6 +127,34 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
         </p>
 
         <div className="w-full max-w-[320px] flex flex-col gap-[11px]" style={{ animation: 'fade-up 0.5s 0.25s ease both' }}>
+          {!videoRequested ? (
+            showEmailInput ? (
+              <div className="w-full bg-[rgba(100,140,255,0.08)] border border-[rgba(100,140,255,0.25)] rounded-xl p-4">
+                <p className="text-[12px] text-[#7B9FFF] mb-3 font-medium">Ange din e-post så skickar vi videon:</p>
+                <input
+                  type="email"
+                  value={videoEmail}
+                  onChange={(e) => setVideoEmail(e.target.value)}
+                  placeholder="din@email.se"
+                  className="w-full px-3.5 py-3 bg-[#2A2A2A] border border-[#444] rounded-[9px] text-[#F5F0E8] text-base outline-none focus:border-[#7B9FFF] transition placeholder:text-[#666] mb-3"
+                  autoFocus
+                />
+                <button onClick={submitVideoEmail}
+                  className="w-full bg-[#7B9FFF] text-[#1A1A1A] rounded-lg py-[11px] text-[14px] font-bold cursor-pointer">
+                  📨 Skicka videon till mig
+                </button>
+              </div>
+            ) : (
+              <button onClick={requestVideo}
+                className="w-full bg-[rgba(100,140,255,0.1)] text-[#7B9FFF] border border-[rgba(100,140,255,0.3)] rounded-xl py-[15px] text-[15px] font-bold flex items-center justify-center gap-2 cursor-pointer">
+                📨 Skicka videon till mig
+              </button>
+            )
+          ) : (
+            <div className="w-full bg-[rgba(0,200,83,0.08)] text-[#00C853] border border-[rgba(0,200,83,0.2)] rounded-xl py-[15px] text-[15px] font-bold flex items-center justify-center gap-2">
+              ✓ Vi skickar videon till dig!
+            </div>
+          )}
           <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer"
             className="w-full bg-[rgba(201,146,42,0.12)] text-[#C9922A] border border-[rgba(201,146,42,0.3)] rounded-xl py-[15px] text-[15px] font-bold flex items-center justify-center gap-2">
             ★ Lämna en Google-recension
