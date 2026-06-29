@@ -1,6 +1,6 @@
 {
   "name": "OPEN STAGE with DEMIR",
-  "short_name": "OPEN STAGE",
+  "short_name": "OPEN STAGE with DEMIR",
   "description": "Kliv upp på scen! Anmäl dig till Open Stage och sjung din favoritlåt.",
   "start_url": "/",
   "display": "standalone",
