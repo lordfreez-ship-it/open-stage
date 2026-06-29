@@ -15,7 +15,7 @@ export default function BottomBar() {
   const swishUrl = `swish://payment?data=${encodeURIComponent(swishData)}`;
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] backdrop-blur-[18px] border-t border-[#1E1E1E] px-3.5 py-2.5 z-50"
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] md:max-w-[640px] lg:max-w-[720px] backdrop-blur-[18px] border-t border-[#1E1E1E] px-3.5 md:px-6 py-2.5 md:py-3.5 z-50"
       style={{ background: 'rgba(14,14,14,0.98)' }}>
       <div className="flex items-center gap-2">
         <a

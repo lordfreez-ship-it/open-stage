@@ -77,7 +77,7 @@ export default function AdminPage() {
   if (!authenticated) {
     const numpadKeys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-[#1A1A1A] relative max-w-[480px] mx-auto">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-[#1A1A1A] relative max-w-[480px] md:max-w-[540px] mx-auto">
         <a href="/" className="absolute top-5 left-4 bg-transparent border border-[#222] text-[#3A3A3A] text-xs px-[13px] py-[7px] rounded-[7px] tracking-[0.03em]">
           ← Gäst
         </a>
@@ -149,7 +149,7 @@ export default function AdminPage() {
   const waitingCount = entries.filter(e => e.status === 'registered' || e.status === 'waiting').length;
 
   return (
-    <div className="min-h-screen bg-[#1A1A1A] max-w-[480px] mx-auto">
+    <div className="min-h-screen bg-[#1A1A1A] max-w-[480px] md:max-w-[720px] lg:max-w-[900px] mx-auto">
       {/* Admin header */}
       <header className="sticky top-0 z-50 backdrop-blur-[18px] border-b border-[#1E1E1E] px-4 py-3"
         style={{ background: 'rgba(14,14,14,0.98)' }}>

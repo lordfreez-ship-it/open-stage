@@ -51,7 +51,7 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
 
   if (entry.status === 'waiting') {
     return (
-      <div className="fixed inset-0 bg-[#FFD600] flex flex-col items-center justify-center px-7 py-10 text-center z-50"
+      <div className="fixed inset-0 bg-[#FFD600] flex flex-col items-center justify-center px-7 md:px-12 py-10 text-center z-50"
         style={{ animation: 'status-pulse 2.8s ease-in-out infinite' }}>
         <div className="text-[58px] mb-7">⏳</div>
         <p className="text-[11px] tracking-[0.2em] uppercase text-black/[0.38] mb-2.5 font-bold">Håll dig redo</p>
@@ -74,7 +74,7 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
 
   if (entry.status === 'your_turn') {
     return (
-      <div className="fixed inset-0 bg-[#00C853] flex flex-col items-center justify-center px-7 py-10 text-center z-50">
+      <div className="fixed inset-0 bg-[#00C853] flex flex-col items-center justify-center px-7 md:px-12 py-10 text-center z-50">
         <div className="text-[84px] mb-6" style={{ animation: 'strong-pulse 1s ease-in-out infinite' }}>🎤</div>
         <p className="text-[11px] tracking-[0.24em] uppercase text-black/[0.38] mb-2.5 font-bold">Nu!</p>
         <h1 className="font-[family-name:var(--font-playfair)] text-[54px] font-black text-[#1A1A1A] leading-[0.98] mb-2"
@@ -115,7 +115,7 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
 
   if (entry.status === 'done') {
     return (
-      <div className="min-h-screen bg-[#1C1409] flex flex-col items-center justify-center px-6 py-10 text-center"
+      <div className="min-h-screen bg-[#1C1409] flex flex-col items-center justify-center px-6 md:px-12 py-10 text-center"
         style={{ animation: 'fade-up 0.5s ease' }}>
         <div className="text-[64px] mb-5">🌟</div>
         <p className="text-[10px] tracking-[0.2em] uppercase text-[#C9922A] mb-2.5 font-semibold">Bravissimo!</p>
@@ -126,7 +126,7 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
           Thanks for being brave!
         </p>
 
-        <div className="w-full max-w-[320px] flex flex-col gap-[11px]" style={{ animation: 'fade-up 0.5s 0.25s ease both' }}>
+        <div className="w-full max-w-[320px] md:max-w-[420px] flex flex-col gap-[11px] md:gap-3.5" style={{ animation: 'fade-up 0.5s 0.25s ease both' }}>
           {!videoRequested ? (
             showEmailInput ? (
               <div className="w-full bg-[rgba(100,140,255,0.08)] border border-[rgba(100,140,255,0.25)] rounded-xl p-4">
@@ -185,7 +185,7 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
 
   // registered
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center"
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 md:px-12 py-10 text-center"
       style={{ animation: 'fade-up 0.45s ease' }}>
       <div className="w-[82px] h-[82px] rounded-full bg-[rgba(201,146,42,0.07)] border-2 border-[rgba(201,146,42,0.35)] flex items-center justify-center mb-9"
         style={{ animation: 'glow-ring 2.5s ease-in-out infinite' }}>

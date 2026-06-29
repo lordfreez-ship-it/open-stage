@@ -1,0 +1,29 @@
+{
+  "name": "Open Stage with Demir",
+  "short_name": "Open Stage",
+  "description": "Kliv upp på scen! Anmäl dig till Open Stage och sjung din favoritlåt.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#110C07",
+  "theme_color": "#110C07",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

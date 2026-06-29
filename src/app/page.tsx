@@ -117,7 +117,7 @@ export default function GuestPage() {
   const formIsValid = !!name.trim() && (!duplicateWarning || confirmedDuplicate);
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[480px] mx-auto relative">
+    <div className="min-h-screen flex flex-col max-w-[480px] md:max-w-[640px] lg:max-w-[720px] mx-auto relative">
       {/* STICKY HEADER */}
       <header className="sticky top-0 z-50 backdrop-blur-[22px] border-b border-white/[0.07] px-4 py-2.5"
         style={{ background: 'rgba(6,4,2,0.32)' }}>
@@ -141,7 +141,7 @@ export default function GuestPage() {
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 px-[18px] pt-7 pb-[108px]">
+      <main className="flex-1 px-[18px] md:px-8 pt-7 md:pt-10 pb-[108px]">
         <p className="text-[10px] tracking-[0.2em] uppercase text-[#C9922A] mb-1.5 font-semibold">Anmäl dig</p>
         <h2 className="font-[family-name:var(--font-playfair)] text-[26px] font-extrabold text-[#F5F0E8] leading-[1.2] mb-1.5">
           Kliv upp på scen!
@@ -151,7 +151,7 @@ export default function GuestPage() {
         </p>
 
         {/* FORM CARD */}
-        <form onSubmit={handleSubmit} className="bg-[#242424] rounded-2xl p-[22px] border border-[#282828] mb-9">
+        <form onSubmit={handleSubmit} className="bg-[#242424] rounded-2xl p-[22px] md:p-8 border border-[#282828] mb-9">
           {/* Name */}
           <div className="mb-[15px]">
             <label className="block text-[11px] font-bold tracking-[0.12em] uppercase text-[#999] mb-[7px]">Namn</label>
