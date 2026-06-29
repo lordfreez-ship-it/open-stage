@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 export default function InstallPrompt() {
   const [show, setShow] = useState(false);
+  const [inApp, setInApp] = useState(false);
 
   useEffect(() => {
     // Suppress Chrome's automatic install banner on Android. Installing the
@@ -13,7 +14,6 @@ export default function InstallPrompt() {
     // never push install there. This keeps the experience warning-free.
     const suppress = (e: Event) => e.preventDefault();
     window.addEventListener('beforeinstallprompt', suppress);
-
     const cleanup = () => window.removeEventListener('beforeinstallprompt', suppress);
 
     if (localStorage.getItem('os_install_dismissed')) return cleanup;
@@ -24,11 +24,13 @@ export default function InstallPrompt() {
 
     const ua = window.navigator.userAgent;
     const isIOS = /iphone|ipad|ipod/i.test(ua);
-    const isSafari = /safari/i.test(ua) && !/chrome|crios|fxios/i.test(ua);
+    if (!isIOS) return cleanup;
 
-    // Only iOS Safari benefits from "Add to Home Screen": it is required for
-    // iOS web-push, and iOS never shows a security warning for it.
-    if (isIOS && isSafari) setShow(true);
+    // In-app browsers (Instagram, Facebook, Messenger, Snapchat, TikTok, Line)
+    // do not offer "Add to Home Screen" — the user must open in Safari first.
+    const inAppBrowser = /FBAN|FBAV|Instagram|Messenger|Snapchat|Line\/|TikTok|Twitter/i.test(ua);
+    setInApp(inAppBrowser);
+    setShow(true);
 
     return cleanup;
   }, []);
@@ -48,18 +50,27 @@ export default function InstallPrompt() {
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-bold text-[#F5F0E8] leading-tight">Få en notis när det är din tur</p>
             <p className="text-[11px] text-[#777] mt-1 leading-[1.5]">
-              Lägg till Open Stage på hemskärmen så kan vi meddela dig — även när skärmen är låst.
+              {inApp
+                ? 'Öppna sidan i Safari först — så kan du få en notis även när skärmen är låst.'
+                : 'Lägg till Open Stage på hemskärmen så kan vi meddela dig — även när skärmen är låst.'}
             </p>
           </div>
           <button onClick={handleDismiss} className="text-[#444] text-lg leading-none shrink-0 p-1">
             &#x2715;
           </button>
         </div>
-        <div className="mt-3 flex items-center justify-center gap-2 bg-[rgba(201,146,42,0.08)] border border-[rgba(201,146,42,0.15)] rounded-xl py-3 px-4">
-          <span className="text-[12px] text-[#C9922A] font-semibold text-center leading-[1.5]">
-            Tryck på <span className="inline-block border border-[#C9922A] rounded px-1.5 py-0.5 text-[11px] mx-0.5">&#x2191;</span> nere i menyn och välj &quot;Lägg till på hemskärmen&quot;
-          </span>
-        </div>
+
+        {inApp ? (
+          <ol className="mt-3 bg-[rgba(201,146,42,0.06)] border border-[rgba(201,146,42,0.12)] rounded-xl py-3 px-4 text-[12px] text-[#C9922A] leading-[1.7] list-decimal list-inside font-medium">
+            <li>Tryck på <span className="text-[#F5F0E8]">&#x22EF;</span> (menyn uppe i hörnet)</li>
+            <li>Välj <span className="text-[#F5F0E8]">&quot;Öppna i Safari&quot;</span></li>
+          </ol>
+        ) : (
+          <ol className="mt-3 bg-[rgba(201,146,42,0.06)] border border-[rgba(201,146,42,0.12)] rounded-xl py-3 px-4 text-[12px] text-[#C9922A] leading-[1.7] list-decimal list-inside font-medium">
+            <li>Tryck på Dela-knappen <span className="inline-block border border-[#C9922A] rounded px-1 text-[#F5F0E8] text-[11px]">&#x2191;</span> längst ner i Safari</li>
+            <li>Scrolla och välj <span className="text-[#F5F0E8]">&quot;Lägg till på hemskärmen&quot;</span></li>
+          </ol>
+        )}
       </div>
     </div>
   );
