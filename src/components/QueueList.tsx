@@ -19,53 +19,78 @@ export default function QueueList() {
 
   useEffect(() => {
     fetchQueue();
-
     const channel = supabase
       .channel('queue-public')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'queue_entries' },
-        () => { fetchQueue(); }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_entries' }, () => { fetchQueue(); })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  if (entries.length === 0) return null;
+  const waitingCount = entries.filter(e => e.status === 'waiting' || e.status === 'registered').length;
 
   return (
-    <div className="mt-8">
-      <h2 className="text-lg font-semibold text-[#C9922A] mb-3">
-        Kölista / Queue
-      </h2>
-      <div className="space-y-2">
-        {entries.map((e) => (
-          <div
-            key={e.id}
-            className={`rounded-lg px-4 py-3 flex items-center justify-between ${
-              e.status === 'your_turn'
-                ? 'bg-[#00C853]/20 border border-[#00C853]/40'
-                : 'bg-white/5 border border-white/10'
-            }`}
-          >
-            <div>
-              <span className="font-medium">{e.name}</span>
-              <span className="text-white/40 mx-2">—</span>
-              <span className="text-white/60">{e.song}</span>
-            </div>
-            <span
-              className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
-                e.status === 'your_turn'
-                  ? 'bg-[#00C853]/30 text-[#00C853]'
-                  : 'bg-white/10 text-white/40'
-              }`}
-            >
-              {e.status === 'your_turn' ? 'På scen / On stage' : 'Väntar / Waiting'}
-            </span>
-          </div>
-        ))}
+    <div>
+      <div className="flex items-center justify-between mb-3.5">
+        <p className="text-[10px] tracking-[0.2em] uppercase text-[#C9922A] font-semibold">Kön just nu</p>
+        <span className="text-xs text-[#3A3A3A] font-medium">{waitingCount} väntar</span>
       </div>
+
+      {entries.length > 0 ? (
+        entries.map((e, i) => {
+          const isOnStage = e.status === 'your_turn';
+          return (
+            <div
+              key={e.id}
+              className="rounded-[10px] px-3.5 py-3 mb-2 flex items-center gap-3"
+              style={{
+                background: isOnStage ? '#1E1808' : '#1C1C1C',
+                border: `1px solid ${isOnStage ? '#C9922A' : '#212121'}`,
+              }}
+            >
+              <div
+                className="w-[34px] h-[34px] rounded-full shrink-0 flex items-center justify-center"
+                style={{
+                  background: isOnStage ? 'rgba(201,146,42,0.14)' : '#222',
+                  fontSize: isOnStage ? 16 : 11,
+                  fontWeight: 600,
+                  color: isOnStage ? '#C9922A' : '#3A3A3A',
+                }}
+              >
+                {isOnStage ? '🎤' : i + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-[7px] flex-wrap">
+                  <span style={{
+                    fontSize: 14,
+                    fontWeight: isOnStage ? 600 : 400,
+                    color: isOnStage ? '#F5F0E8' : '#666',
+                  }}>
+                    {e.name}
+                  </span>
+                  {isOnStage && (
+                    <span className="text-[9px] bg-[#C9922A] text-[#1A1A1A] px-2 py-[2px] rounded-[3px] font-extrabold tracking-[0.08em] uppercase">
+                      LIVE
+                    </span>
+                  )}
+                </div>
+                <div style={{
+                  fontSize: 12,
+                  marginTop: 2,
+                  color: isOnStage ? '#C9922A' : '#3A3A3A',
+                }}>
+                  {e.song}
+                </div>
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <div className="text-center py-10 text-[#2E2E2E]">
+          <div className="text-4xl mb-2.5">🎤</div>
+          <div className="font-[family-name:var(--font-playfair)] text-[#3A3A3A] text-base">Kön är tom</div>
+          <div className="text-[13px] text-[#2A2A2A] mt-1">Bli den första att anmäla dig!</div>
+        </div>
+      )}
     </div>
   );
 }

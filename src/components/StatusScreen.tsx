@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { supabase, QueueEntry } from '@/lib/supabase';
-import Footer from './Footer';
+
+const GOOGLE_REVIEW_URL = process.env.NEXT_PUBLIC_GOOGLE_REVIEW_URL || '';
+const SWISH_NUMBER = process.env.NEXT_PUBLIC_SWISH_NUMBER || '';
+const FACEBOOK_URL = process.env.NEXT_PUBLIC_FACEBOOK_URL || '';
+const YOUTUBE_URL = process.env.NEXT_PUBLIC_YOUTUBE_URL || '';
 
 export default function StatusScreen({ entry: initial }: { entry: QueueEntry }) {
   const [entry, setEntry] = useState(initial);
@@ -12,93 +16,110 @@ export default function StatusScreen({ entry: initial }: { entry: QueueEntry }) 
       .channel(`entry-${initial.id}`)
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'queue_entries',
-          filter: `id=eq.${initial.id}`,
-        },
-        (payload) => {
-          setEntry(payload.new as QueueEntry);
-        }
+        { event: 'UPDATE', schema: 'public', table: 'queue_entries', filter: `id=eq.${initial.id}` },
+        (payload) => { setEntry(payload.new as QueueEntry); }
       )
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [initial.id]);
 
+  const swishData = JSON.stringify({ format: 'raw', version: 1, payee: { value: SWISH_NUMBER }, message: { value: 'Open Stage tip' } });
+  const swishUrl = `swish://payment?data=${encodeURIComponent(swishData)}`;
+
   if (entry.status === 'waiting') {
     return (
-      <div className="fixed inset-0 bg-[#FFD600] flex items-center justify-center animate-pulse-bg z-50">
-        <div className="text-center px-6">
-          <p className="text-6xl mb-6">🎸</p>
-          <h1 className="text-3xl md:text-5xl font-bold text-black mb-4">
-            Du är näst i kön — börja stämma gitarren!
-          </h1>
-          <p className="text-xl md:text-2xl text-black/70">
-            You&apos;re up next — start tuning!
-          </p>
-        </div>
+      <div className="fixed inset-0 bg-[#FFD600] flex flex-col items-center justify-center px-7 py-10 text-center z-50"
+        style={{ animation: 'status-pulse 2.8s ease-in-out infinite' }}>
+        <div className="text-[58px] mb-7">⏳</div>
+        <p className="text-[11px] tracking-[0.2em] uppercase text-black/[0.38] mb-2.5 font-bold">Håll dig redo</p>
+        <h1 className="font-[family-name:var(--font-playfair)] text-[46px] font-black text-[#1A1A1A] leading-none mb-2">
+          Snart är det<br />din tur!
+        </h1>
+        <p className="font-[family-name:var(--font-playfair)] italic text-[22px] text-black/40 mb-[22px]">
+          You&apos;re up next!
+        </p>
+        <p className="text-[15px] text-black/50 max-w-[280px] leading-[1.65] font-medium">
+          Förbered dig — det är snart dags att ta scenen. Håll ögonen på skärmen!
+        </p>
       </div>
     );
   }
 
   if (entry.status === 'your_turn') {
     return (
-      <div className="fixed inset-0 bg-[#00C853] flex items-center justify-center animate-pulse-bg z-50">
-        <div className="text-center px-6">
-          <p className="text-6xl mb-6">🌟</p>
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
-            Din tur att briljera!
-          </h1>
-          <p className="text-xl md:text-2xl text-white/80">
-            It&apos;s your time to shine!
-          </p>
-        </div>
+      <div className="fixed inset-0 bg-[#00C853] flex flex-col items-center justify-center px-7 py-10 text-center z-50">
+        <div className="text-[84px] mb-6" style={{ animation: 'strong-pulse 1s ease-in-out infinite' }}>🎤</div>
+        <p className="text-[11px] tracking-[0.24em] uppercase text-black/[0.38] mb-2.5 font-bold">Nu!</p>
+        <h1 className="font-[family-name:var(--font-playfair)] text-[54px] font-black text-[#1A1A1A] leading-[0.98] mb-2"
+          style={{ animation: 'strong-pulse 1s ease-in-out infinite' }}>
+          Det är<br />din tur!
+        </h1>
+        <p className="font-[family-name:var(--font-playfair)] italic text-[26px] text-black/[0.38] mb-[22px]">
+          It&apos;s your turn!
+        </p>
+        <p className="text-base text-black/[0.55] max-w-[240px] leading-[1.55] font-semibold">
+          Gå upp på scen och visa vad du går för! 🔥
+        </p>
       </div>
     );
   }
 
   if (entry.status === 'done') {
     return (
-      <div className="min-h-screen bg-[#2A1A0A] flex flex-col">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center px-6">
-            <p className="text-6xl mb-6">🎉</p>
-            <h1 className="text-3xl md:text-4xl font-bold text-[#C9922A] mb-4">
-              Tack för att du vågade!
-            </h1>
-            <p className="text-xl text-white/70 mb-8">
-              Thanks for being brave!
-            </p>
+      <div className="min-h-screen bg-[#1C1409] flex flex-col items-center justify-center px-6 py-10 text-center"
+        style={{ animation: 'fade-up 0.5s ease' }}>
+        <div className="text-[64px] mb-5">🌟</div>
+        <p className="text-[10px] tracking-[0.2em] uppercase text-[#C9922A] mb-2.5 font-semibold">Bravissimo!</p>
+        <h1 className="font-[family-name:var(--font-playfair)] text-[34px] font-extrabold text-[#F5F0E8] leading-[1.2] mb-[7px]">
+          Tack för att du vågade!
+        </h1>
+        <p className="font-[family-name:var(--font-playfair)] italic text-lg text-[#F5F0E8]/[0.35] mb-9">
+          Thanks for being brave!
+        </p>
+
+        <div className="w-full max-w-[320px] flex flex-col gap-[11px]" style={{ animation: 'fade-up 0.5s 0.25s ease both' }}>
+          <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noopener noreferrer"
+            className="w-full bg-[rgba(201,146,42,0.12)] text-[#C9922A] border border-[rgba(201,146,42,0.3)] rounded-xl py-[15px] text-[15px] font-bold flex items-center justify-center gap-2">
+            ★ Lämna en Google-recension
+          </a>
+          <a href={swishUrl}
+            className="w-full bg-[rgba(0,200,83,0.1)] text-[#00C853] border border-[rgba(0,200,83,0.25)] rounded-xl py-[15px] text-[15px] font-bold flex items-center justify-center gap-2">
+            💚 Swisha ett bidrag
+          </a>
+          <div className="flex gap-2.5">
+            <a href={FACEBOOK_URL} target="_blank" rel="noopener noreferrer"
+              className="flex-1 bg-[#1A2535] text-[#5090CF] border border-[#1E3050] rounded-xl py-[13px] text-sm font-semibold text-center">
+              Facebook
+            </a>
+            <a href={YOUTUBE_URL} target="_blank" rel="noopener noreferrer"
+              className="flex-1 bg-[#2A1515] text-[#FF6666] border border-[#3D1C1C] rounded-xl py-[13px] text-sm font-semibold text-center">
+              YouTube
+            </a>
           </div>
+          <button onClick={() => window.location.reload()}
+            className="bg-transparent border border-[#1E1E1E] text-[#3A3A3A] rounded-[10px] py-3 text-[13px] cursor-pointer mt-1">
+            Anmäl dig igen
+          </button>
         </div>
-        <Footer />
       </div>
     );
   }
 
-  // registered (default)
+  // registered
   return (
-    <div className="min-h-screen bg-[#1A1A1A] flex flex-col">
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center px-6">
-          <p className="text-6xl mb-6">🎤</p>
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-4">
-            Du är registrerad!
-          </h1>
-          <p className="text-lg text-white/60 mb-2">
-            Demir kallar på dig snart.
-          </p>
-          <p className="text-lg text-white/40">
-            You&apos;re registered! Demir will call you soon.
-          </p>
-          <p className="text-sm text-white/30 mt-8">
-            Håll den här skärmen öppen / Keep this screen open
-          </p>
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center"
+      style={{ animation: 'fade-up 0.45s ease' }}>
+      <div className="w-[82px] h-[82px] rounded-full bg-[rgba(201,146,42,0.07)] border-2 border-[rgba(201,146,42,0.35)] flex items-center justify-center mb-9"
+        style={{ animation: 'glow-ring 2.5s ease-in-out infinite' }}>
+        <div className="w-6 h-6 rounded-full bg-[#C9922A]" style={{ animation: 'pulse-dot 1.8s ease-in-out infinite' }} />
       </div>
-      <Footer />
+      <p className="text-[10px] tracking-[0.2em] uppercase text-[#C9922A] mb-2.5 font-semibold">Registrerad</p>
+      <h1 className="font-[family-name:var(--font-playfair)] text-4xl font-extrabold text-[#F5F0E8] mb-3 leading-[1.15]">
+        Du är i kön!
+      </h1>
+      <p className="text-[15px] text-[#555] max-w-[280px] leading-[1.7]">
+        Vi meddelar dig när det är dags. Håll koll på skärmen — du behöver inte göra något mer.
+      </p>
     </div>
   );
 }

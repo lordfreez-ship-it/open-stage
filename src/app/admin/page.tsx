@@ -4,6 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase, QueueEntry } from '@/lib/supabase';
 import { getTodaySessionId } from '@/lib/session';
 
+function getInitials(name: string) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [pin, setPin] = useState('');
@@ -23,34 +27,14 @@ export default function AdminPage() {
   useEffect(() => {
     if (!authenticated) return;
     fetchQueue();
-
     const channel = supabase
       .channel('admin-queue')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'queue_entries' },
-        () => { fetchQueue(); }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_entries' }, () => { fetchQueue(); })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [authenticated, fetchQueue]);
 
-  const handlePinSubmit = async () => {
-    const res = await fetch('/api/admin/verify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin }),
-    });
-    if (res.ok) {
-      setAuthenticated(true);
-    } else {
-      setPinError(true);
-      setPin('');
-    }
-  };
-
-  const handleKeyPress = (digit: string) => {
+  const pressPin = (digit: string) => {
     setPinError(false);
     const next = pin + digit;
     setPin(next);
@@ -73,166 +57,201 @@ export default function AdminPage() {
   };
 
   const recordTimestamp = async (id: string) => {
-    await supabase
-      .from('queue_entries')
-      .update({ recorded_at: new Date().toISOString() })
-      .eq('id', id);
+    await supabase.from('queue_entries').update({ recorded_at: new Date().toISOString() }).eq('id', id);
   };
 
+  // PIN SCREEN
   if (!authenticated) {
+    const numpadKeys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
     return (
-      <div className="min-h-screen bg-[#1A1A1A] flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-[#C9922A] mb-6">Admin</h1>
-          <div className="flex justify-center gap-2 mb-6">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className={`w-4 h-4 rounded-full ${
-                  pin.length > i ? 'bg-[#C9922A]' : 'bg-white/20'
-                }`}
-              />
-            ))}
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-[#1A1A1A] relative max-w-[480px] mx-auto">
+        <a href="/" className="absolute top-5 left-4 bg-transparent border border-[#222] text-[#3A3A3A] text-xs px-[13px] py-[7px] rounded-[7px] tracking-[0.03em]">
+          ← Gäst
+        </a>
+
+        <div className="text-center mb-10">
+          <p className="text-[10px] tracking-[0.2em] uppercase text-[#333] mb-3 font-medium">Admin-panel</p>
+          <img src="/assets/logo-neon-dark.png" alt="DC's Live Music" className="h-[52px] w-[52px] object-contain rounded-lg mb-2.5 mx-auto" />
+          <div className="font-[family-name:var(--font-playfair)] font-black text-[28px] tracking-[0.12em] uppercase text-[#C9922A]">
+            OPEN STAGE
           </div>
-          {pinError && (
-            <p className="text-[#C1440E] text-sm mb-4">Fel PIN / Wrong PIN</p>
-          )}
-          <div className="grid grid-cols-3 gap-3 max-w-[240px] mx-auto">
-            {['1','2','3','4','5','6','7','8','9','','0','⌫'].map((d) => (
-              <button
-                key={d || 'empty'}
-                disabled={!d}
-                onClick={() => {
-                  if (d === '⌫') { setPin((p) => p.slice(0, -1)); setPinError(false); }
-                  else if (d) handleKeyPress(d);
-                }}
-                className={`h-14 rounded-lg text-xl font-medium transition ${
-                  !d
-                    ? 'invisible'
-                    : 'bg-white/10 hover:bg-white/20 text-white active:bg-white/30'
-                }`}
-              >
-                {d}
-              </button>
-            ))}
+          <div className="font-[family-name:var(--font-dancing)] font-bold text-[22px] text-[#C1440E] mt-0.5">
+            with Demir
           </div>
+        </div>
+
+        {/* PIN dots */}
+        <div className="flex items-center gap-5 mb-7">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="w-[18px] h-[18px] rounded-full transition-all duration-150"
+              style={{
+                background: i < pin.length ? '#C9922A' : 'transparent',
+                border: `2px solid ${i < pin.length ? '#C9922A' : '#2E2E2E'}`,
+              }}
+            />
+          ))}
+        </div>
+
+        {pinError && (
+          <p className="text-[#C1440E] text-[13px] mb-4 tracking-[0.02em]" style={{ animation: 'slide-down 0.3s ease' }}>
+            Fel PIN-kod. Försök igen.
+          </p>
+        )}
+
+        {/* Numpad */}
+        <div className="grid grid-cols-3 gap-2.5 w-[264px] mb-3.5">
+          {numpadKeys.map((d, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                if (d === '⌫') { setPin(p => p.slice(0, -1)); setPinError(false); }
+                else if (d) pressPin(d);
+              }}
+              disabled={!d}
+              className="w-full rounded-xl transition"
+              style={{
+                background: d === '' ? 'transparent' : '#222',
+                border: d === '' ? 'none' : '1px solid #2A2A2A',
+                padding: '18px 0',
+                fontSize: d === '⌫' ? 20 : 28,
+                fontWeight: 500,
+                lineHeight: 1,
+                color: d === '⌫' ? '#444' : '#F5F0E8',
+                cursor: d === '' ? 'default' : 'pointer',
+                fontFamily: d === '⌫' ? "'Inter', sans-serif" : 'var(--font-playfair)',
+                pointerEvents: d === '' ? 'none' : 'auto',
+              }}
+            >
+              {d}
+            </button>
+          ))}
         </div>
       </div>
     );
   }
 
-  const waitingCount = entries.filter(
-    (e) => e.status === 'registered' || e.status === 'waiting'
-  ).length;
+  // ADMIN QUEUE
+  const waitingCount = entries.filter(e => e.status === 'registered' || e.status === 'waiting').length;
 
   return (
-    <div className="min-h-screen bg-[#1A1A1A] p-4 md:p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-[#C9922A]">🎤 Admin</h1>
-          <div className="bg-[#C9922A]/20 text-[#C9922A] px-4 py-2 rounded-full font-semibold text-sm">
-            {waitingCount} väntar
+    <div className="min-h-screen bg-[#1A1A1A] max-w-[480px] mx-auto">
+      {/* Admin header */}
+      <header className="sticky top-0 z-50 backdrop-blur-[18px] border-b border-[#1E1E1E] px-4 py-3"
+        style={{ background: 'rgba(14,14,14,0.98)' }}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-[7px]">
+            <div className="w-[9px] h-[9px] rounded-full bg-[#00C853]"
+              style={{ boxShadow: '0 0 7px rgba(0,200,83,0.6)', animation: 'pulse-dot 2.5s ease-in-out infinite' }} />
+            <span className="text-[11px] text-[#3A3A3A] font-medium tracking-[0.06em]">Live</span>
+          </div>
+          <div className="text-center">
+            <div className="font-[family-name:var(--font-playfair)] font-black text-[17px] tracking-[0.12em] uppercase text-[#C9922A] leading-[1.1]">
+              OPEN STAGE
+            </div>
+            <div className="text-[9px] text-[#3A3A3A] tracking-[0.14em] uppercase font-semibold">Admin</div>
+          </div>
+          <div className="bg-[rgba(201,146,42,0.09)] border border-[rgba(201,146,42,0.22)] rounded-[20px] px-[13px] py-1">
+            <span className="text-xs text-[#C9922A] font-bold">{waitingCount} väntar</span>
           </div>
         </div>
+      </header>
 
-        {entries.length === 0 ? (
-          <div className="text-center text-white/30 py-20">
-            <p className="text-4xl mb-4">🎵</p>
-            <p>Inga i kön just nu / No one in the queue</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {entries.map((e) => (
+      {/* Queue cards */}
+      <div className="px-3.5 pt-[18px] pb-[52px]">
+        {entries.length > 0 ? (
+          entries.map((e) => {
+            const isOnStage = e.status === 'your_turn';
+            const isWaiting = e.status === 'waiting';
+            return (
               <div
                 key={e.id}
-                className={`rounded-xl p-4 border transition ${
-                  e.status === 'your_turn'
-                    ? 'bg-[#00C853]/10 border-[#00C853]/30'
-                    : e.status === 'waiting'
-                    ? 'bg-[#FFD600]/10 border-[#FFD600]/30'
-                    : 'bg-white/5 border-white/10'
-                }`}
+                className="rounded-[14px] p-4 mb-3"
+                style={{
+                  background: '#202020',
+                  border: `1px solid ${isOnStage ? '#C9922A' : '#272727'}`,
+                  boxShadow: isOnStage ? '0 0 28px rgba(201,146,42,0.1)' : 'none',
+                }}
               >
-                <div className="flex flex-col md:flex-row md:items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-lg">{e.name}</span>
-                      {e.video_consent && (
-                        <span title="Video consent">🎥</span>
-                      )}
-                      {e.email && (
-                        <span className="text-xs text-white/30 truncate max-w-[200px]">
-                          📧 {e.email}
-                        </span>
-                      )}
+                {/* Card header */}
+                <div className="flex items-center justify-between mb-3.5">
+                  <div className="flex items-center gap-[11px]">
+                    <div className="w-10 h-10 rounded-full bg-[rgba(201,146,42,0.1)] border border-[rgba(201,146,42,0.22)] flex items-center justify-center font-[family-name:var(--font-playfair)] font-extrabold text-[#C9922A] text-sm shrink-0">
+                      {getInitials(e.name)}
                     </div>
-                    <p className="text-white/60 text-sm">
-                      {e.song}
-                      {e.custom_song && (
-                        <span className="text-[#C9922A] ml-2">
-                          + {e.custom_song}
-                        </span>
-                      )}
-                    </p>
-                    <span
-                      className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full ${
-                        e.status === 'your_turn'
-                          ? 'bg-[#00C853]/20 text-[#00C853]'
-                          : e.status === 'waiting'
-                          ? 'bg-[#FFD600]/20 text-[#FFD600]'
-                          : 'bg-white/10 text-white/40'
-                      }`}
-                    >
-                      {e.status === 'your_turn'
-                        ? 'På scen'
-                        : e.status === 'waiting'
-                        ? 'Nästa'
-                        : 'Registrerad'}
-                    </span>
+                    <div>
+                      <div className="font-semibold text-[#F5F0E8] text-[15px] flex items-center gap-2 leading-[1.2]">
+                        {e.name}
+                        {e.video_consent && <span className="text-[13px]" title="Videoinspelning godkänd">🎥</span>}
+                      </div>
+                      <div className="text-xs text-[#4A4A4A] mt-0.5">
+                        {e.song}
+                        {e.custom_song && <span className="text-[#C9922A] ml-1">+ {e.custom_song}</span>}
+                      </div>
+                      {e.email && <div className="text-[10px] text-[#333] mt-0.5">📧 {e.email}</div>}
+                    </div>
                   </div>
+                  <span
+                    className="text-[11px] font-semibold whitespace-nowrap shrink-0 px-[11px] py-1 rounded-[20px]"
+                    style={{
+                      background: isOnStage ? 'rgba(201,146,42,0.1)' : 'rgba(255,255,255,0.03)',
+                      color: isOnStage ? '#C9922A' : '#3A3A3A',
+                      border: `1px solid ${isOnStage ? 'rgba(201,146,42,0.28)' : '#242424'}`,
+                    }}
+                  >
+                    {isOnStage ? '🎤 På scen' : isWaiting ? '⏳ Nästa' : '📋 Registrerad'}
+                  </span>
+                </div>
 
-                  <div className="flex flex-wrap gap-2 shrink-0">
-                    <button
-                      onClick={() => updateStatus(e.id, 'waiting')}
-                      className="px-3 py-2 bg-[#FFD600]/20 hover:bg-[#FFD600]/30 text-[#FFD600] rounded-lg text-sm font-medium transition"
-                    >
-                      Nästa
-                    </button>
-                    <button
-                      onClick={() => updateStatus(e.id, 'your_turn')}
-                      className="px-3 py-2 bg-[#00C853]/20 hover:bg-[#00C853]/30 text-[#00C853] rounded-lg text-sm font-medium transition"
-                    >
-                      Din tur
-                    </button>
-                    <button
-                      onClick={() => recordTimestamp(e.id)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition ${
-                        e.video_consent
-                          ? 'bg-red-500/30 hover:bg-red-500/40 text-red-400 ring-2 ring-red-500/50'
-                          : 'bg-white/10 hover:bg-white/15 text-white/50'
-                      } ${e.recorded_at ? 'opacity-50' : ''}`}
-                      title={e.recorded_at ? `Inspelad ${new Date(e.recorded_at).toLocaleTimeString('sv-SE')}` : ''}
-                    >
-                      ⏺ Spela in
-                    </button>
-                    <button
-                      onClick={() => updateStatus(e.id, 'done')}
-                      className="px-3 py-2 bg-[#C9922A]/20 hover:bg-[#C9922A]/30 text-[#C9922A] rounded-lg text-sm font-medium transition"
-                    >
-                      ✓ Klar
-                    </button>
-                    <button
-                      onClick={() => updateStatus(e.id, 'skipped')}
-                      className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/30 rounded-lg text-sm font-medium transition"
-                    >
-                      Hoppa över
-                    </button>
-                  </div>
+                {/* Action buttons */}
+                <div className="flex gap-[7px] flex-wrap">
+                  <button onClick={() => updateStatus(e.id, 'waiting')}
+                    className="flex-1 bg-[rgba(201,146,42,0.12)] text-[#C9922A] border border-[rgba(201,146,42,0.28)] rounded-lg py-[9px] px-1 text-xs font-bold cursor-pointer min-w-[72px] whitespace-nowrap">
+                    📣 Nästa
+                  </button>
+                  <button onClick={() => updateStatus(e.id, 'your_turn')}
+                    className="flex-1 bg-[rgba(0,200,83,0.09)] text-[#00C853] border border-[rgba(0,200,83,0.22)] rounded-lg py-[9px] px-1 text-xs font-bold cursor-pointer min-w-[72px] whitespace-nowrap">
+                    🎤 Din tur
+                  </button>
+                  <button onClick={() => recordTimestamp(e.id)}
+                    className="flex-1 rounded-lg py-[9px] px-1 text-xs cursor-pointer min-w-[72px] whitespace-nowrap"
+                    style={{
+                      background: e.video_consent ? 'rgba(193,68,14,0.16)' : 'transparent',
+                      color: e.video_consent ? '#FF6040' : '#2E2E2E',
+                      border: `1px solid ${e.video_consent ? 'rgba(193,68,14,0.45)' : '#242424'}`,
+                      fontWeight: e.video_consent ? 700 : 500,
+                      opacity: e.recorded_at ? 0.5 : 1,
+                    }}
+                    title={e.recorded_at ? `Inspelad ${new Date(e.recorded_at).toLocaleTimeString('sv-SE')}` : ''}
+                  >
+                    ⏺ Spela in
+                  </button>
+                  <button onClick={() => updateStatus(e.id, 'done')}
+                    className="flex-1 bg-[#1C1C1C] text-[#444] border border-[#242424] rounded-lg py-[9px] px-1 text-xs font-medium cursor-pointer min-w-[60px] whitespace-nowrap">
+                    ✓ Klar
+                  </button>
+                  <button onClick={() => updateStatus(e.id, 'skipped')}
+                    className="bg-transparent border border-[#1E1E1E] text-[#2E2E2E] rounded-lg py-[9px] px-2.5 text-[11px] cursor-pointer whitespace-nowrap">
+                    Hoppa
+                  </button>
                 </div>
               </div>
-            ))}
+            );
+          })
+        ) : (
+          <div className="text-center py-[72px] px-5 text-[#282828]">
+            <div className="text-[52px] mb-4">🎸</div>
+            <div className="font-[family-name:var(--font-playfair)] text-[#383838] text-lg mb-1.5">Kön är tom</div>
+            <div className="text-[13px] text-[#262626]">Inga anmälda artister just nu</div>
           </div>
         )}
+
+        <div className="text-center mt-7 pt-6 border-t border-[#1C1C1C]">
+          <a href="/" className="bg-transparent border border-[#1E1E1E] text-[#2E2E2E] py-[9px] px-[22px] rounded-[7px] cursor-pointer text-xs tracking-[0.04em] inline-block">
+            🔒 Lås admin
+          </a>
+        </div>
       </div>
     </div>
   );
