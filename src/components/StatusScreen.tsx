@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase, QueueEntry } from '@/lib/supabase';
 
 const GOOGLE_REVIEW_URL = process.env.NEXT_PUBLIC_GOOGLE_REVIEW_URL || '';
@@ -10,6 +10,15 @@ const YOUTUBE_URL = process.env.NEXT_PUBLIC_YOUTUBE_URL || '';
 
 export default function StatusScreen({ entry: initial, onBack }: { entry: QueueEntry; onBack: () => void }) {
   const [entry, setEntry] = useState(initial);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  const requestWakeLock = useCallback(async () => {
+    try {
+      if ('wakeLock' in navigator && document.visibilityState === 'visible') {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+      }
+    } catch { /* Wake Lock not supported or denied */ }
+  }, []);
 
   useEffect(() => {
     const channel = supabase
@@ -20,8 +29,19 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
         (payload) => { setEntry(payload.new as QueueEntry); }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [initial.id]);
+
+    requestWakeLock();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') requestWakeLock();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      supabase.removeChannel(channel);
+      wakeLockRef.current?.release();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [initial.id, requestWakeLock]);
 
   const swishData = JSON.stringify({ format: 'raw', version: 1, payee: { value: SWISH_NUMBER }, message: { value: 'Open Stage tip' } });
   const swishUrl = `swish://payment?data=${encodeURIComponent(swishData)}`;

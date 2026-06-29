@@ -11,11 +11,20 @@ type Song = { title: string; artist: string };
 
 export default function GuestPage() {
   const [songs, setSongs] = useState<Song[]>([]);
-  const [name, setName] = useState('');
+  const [name, setName] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('os_name') || '';
+    return '';
+  });
   const [selectedSong, setSelectedSong] = useState('');
   const [customSong, setCustomSong] = useState('');
-  const [email, setEmail] = useState('');
-  const [videoConsent, setVideoConsent] = useState(false);
+  const [email, setEmail] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('os_email') || '';
+    return '';
+  });
+  const [videoConsent, setVideoConsent] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('os_consent') === 'true';
+    return false;
+  });
   const [submitting, setSubmitting] = useState(false);
   const [entry, setEntry] = useState<QueueEntry | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
@@ -81,6 +90,9 @@ export default function GuestPage() {
       .single();
 
     if (!error && data) {
+      localStorage.setItem('os_name', name.trim());
+      localStorage.setItem('os_email', email.trim());
+      localStorage.setItem('os_consent', String(videoConsent));
       setEntry(data as QueueEntry);
     }
     setSubmitting(false);
@@ -89,11 +101,8 @@ export default function GuestPage() {
   if (entry) {
     return <StatusScreen entry={entry} onBack={() => {
       setEntry(null);
-      setName('');
       setSelectedSong('');
       setCustomSong('');
-      setEmail('');
-      setVideoConsent(false);
       setDuplicateWarning(false);
       setConfirmedDuplicate(false);
     }} />;
