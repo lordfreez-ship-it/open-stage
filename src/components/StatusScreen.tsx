@@ -42,8 +42,8 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
           Förbered dig — det är snart dags att ta scenen. Håll ögonen på skärmen!
         </p>
         <button onClick={onBack}
-          className="mt-10 bg-black/10 border border-black/15 text-black/50 rounded-[10px] py-3 px-6 text-[13px] cursor-pointer font-semibold">
-          ← Tillbaka till start
+          className="mt-10 bg-black/15 border-2 border-black/20 text-black/70 rounded-xl py-3.5 px-8 text-[14px] cursor-pointer font-bold">
+          🎤 Sjung en till!
         </button>
       </div>
     );
@@ -65,8 +65,8 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
           Gå upp på scen och visa vad du går för! 🔥
         </p>
         <button onClick={onBack}
-          className="mt-10 bg-black/10 border border-black/15 text-black/50 rounded-[10px] py-3 px-6 text-[13px] cursor-pointer font-semibold">
-          ← Tillbaka till start
+          className="mt-10 bg-black/15 border-2 border-black/20 text-black/70 rounded-xl py-3.5 px-8 text-[14px] cursor-pointer font-bold">
+          🎤 Sjung en till!
         </button>
       </div>
     );
@@ -105,7 +105,8 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
             </a>
           </div>
           <button onClick={onBack}
-            className="bg-transparent border border-[#1E1E1E] text-[#3A3A3A] rounded-[10px] py-3 text-[13px] cursor-pointer mt-1">
+            className="w-full bg-[#C9922A] text-[#1A1A1A] rounded-xl py-[15px] text-[15px] font-bold cursor-pointer mt-1"
+            style={{ boxShadow: '0 0 26px rgba(201,146,42,0.32)' }}>
             🎤 Sjung en till!
           </button>
         </div>
@@ -129,8 +130,8 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
         Vi meddelar dig när det är dags. Håll koll på skärmen — du behöver inte göra något mer.
       </p>
       <button onClick={onBack}
-        className="mt-10 bg-transparent border border-[#1E1E1E] text-[#3A3A3A] rounded-[10px] py-3 px-6 text-[13px] cursor-pointer">
-        ← Tillbaka till start
+        className="mt-10 bg-[rgba(201,146,42,0.12)] border border-[rgba(201,146,42,0.3)] text-[#C9922A] rounded-xl py-3.5 px-8 text-[14px] cursor-pointer font-bold">
+        🎤 Sjung en till!
       </button>
     </div>
   );
