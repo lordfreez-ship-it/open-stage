@@ -35,8 +35,10 @@ html { background: #110C07; }
 ::-webkit-scrollbar-track { background: #1A1A1A; }
 ::-webkit-scrollbar-thumb { background: #2E2E2E; border-radius: 2px; }
 
+/* Keep form text comfortably large on every screen. Explicit per-element
+   sizes (all >= 16px) prevent iOS auto-zoom; tablets/desktop get a small bump. */
 @media (min-width: 768px) {
   input, select, textarea, button {
-    font-size: 16px !important;
+    font-size: 18px;
   }
 }
