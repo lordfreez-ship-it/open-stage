@@ -67,6 +67,13 @@ export default function AdminPage() {
 
   const updateStatus = async (id: string, status: string) => {
     await supabase.from('queue_entries').update({ status }).eq('id', id);
+    if (status === 'waiting' || status === 'your_turn') {
+      fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entryId: id, status }),
+      }).catch(() => {});
+    }
   };
 
   const recordTimestamp = async (id: string) => {

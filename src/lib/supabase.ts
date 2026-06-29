@@ -1,8 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+  url || 'https://placeholder.supabase.co',
+  key || 'placeholder-key'
 );
 
 export type QueueEntry = {
@@ -17,4 +20,5 @@ export type QueueEntry = {
   recorded_at: string | null;
   video_requested: boolean;
   session_id: string;
+  push_subscription: string | null;
 };
