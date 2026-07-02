@@ -46,7 +46,7 @@ function urlBase64ToUint8Array(base64String: string) {
   return arr;
 }
 
-function alertUser(status: string) {
+async function alertUser(status: string) {
   if (status === 'waiting' || status === 'your_turn') {
     try { navigator.vibrate?.([300, 100, 300, 100, 300]); } catch { /* */ }
   }
@@ -55,12 +55,23 @@ function alertUser(status: string) {
     const msg = status === 'your_turn'
       ? { title: 'NU! Din tur!', body: 'Gå upp på scen — det är dags!' }
       : { title: 'Snart din tur!', body: 'Gör dig redo — det är snart dags!' };
-
-    new Notification(msg.title, {
+    const options: NotificationOptions = {
       body: msg.body,
       icon: '/icons/icon-192x192.png',
       tag: 'open-stage-status',
-    } as NotificationOptions);
+    };
+
+    // Android Chrome does not allow `new Notification()` from a page — it
+    // must go through the service worker registration. Fall back to the
+    // constructor only where the SW route is unavailable (e.g. desktop).
+    try {
+      const reg = await navigator.serviceWorker?.ready;
+      if (reg) {
+        await reg.showNotification(msg.title, options);
+        return;
+      }
+    } catch { /* fall through */ }
+    try { new Notification(msg.title, options); } catch { /* not supported */ }
   }
 }
 
@@ -102,6 +113,12 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
       subscribeToPush(initial.id);
     }
   }, [initial.id]);
+
+  useEffect(() => {
+    if (!testMsg) return;
+    const t = setTimeout(() => setTestMsg(''), 10000);
+    return () => clearTimeout(t);
+  }, [testMsg]);
 
   const sendTest = useCallback(async () => {
     setTesting(true);
@@ -167,7 +184,7 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
         Notiser är blockerade — aktivera dem i webbläsarens inställningar
       </span>
     </div>
-  ) : notifPermission === 'granted' ? (
+  ) : notifPermission === 'granted' && entry.status === 'registered' ? (
     <div className="fixed top-0 left-0 right-0 z-[60] bg-[rgba(0,200,83,0.12)] border-b border-[rgba(0,200,83,0.28)] py-2 px-4 flex items-center justify-center gap-3 flex-wrap"
       style={{ animation: 'slide-down 0.3s ease' }}>
       <span className="text-[13px] text-[#00C853] font-semibold">🔔 Notiser på</span>
@@ -177,7 +194,7 @@ export default function StatusScreen({ entry: initial, onBack }: { entry: QueueE
       </button>
       {testMsg && <span className="text-[12px] text-[#F5F0E8] w-full text-center leading-[1.4]">{testMsg}</span>}
     </div>
-  ) : (
+  ) : notifPermission === 'granted' ? null : (
     <button
       onClick={requestNotificationPermission}
       className="fixed top-0 left-0 right-0 z-[60] bg-[rgba(201,146,42,0.15)] border-b border-[rgba(201,146,42,0.3)] py-3 px-5 text-center cursor-pointer"

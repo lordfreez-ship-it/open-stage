@@ -23,7 +23,10 @@ export default function InstallPrompt() {
     if (isStandalone) return cleanup;
 
     const ua = window.navigator.userAgent;
-    const isIOS = /iphone|ipad|ipod/i.test(ua);
+    // iPadOS 13+ reports a Mac user agent; a Mac with a touch screen
+    // doesn't exist, so platform+touch identifies those iPads.
+    const isIOS = /iphone|ipad|ipod/i.test(ua)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     if (!isIOS) return cleanup;
 
     // In-app browsers (Instagram, Facebook, Messenger, Snapchat, TikTok, Line)

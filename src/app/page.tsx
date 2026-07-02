@@ -12,23 +12,41 @@ type SpotifyResult = { id: string; title: string; artist: string; albumArt: stri
 
 export default function GuestPage() {
   const [repertoire, setRepertoire] = useState<RepertoireSong[]>([]);
-  const [name, setName] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('os_name') || '';
-    return '';
-  });
+  const [name, setName] = useState('');
   const [selectedSong, setSelectedSong] = useState('');
-  const [email, setEmail] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('os_email') || '';
-    return '';
-  });
-  const [videoConsent, setVideoConsent] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('os_consent') === 'true';
-    return false;
-  });
+  const [email, setEmail] = useState('');
+  const [videoConsent, setVideoConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [entry, setEntry] = useState<QueueEntry | null>(null);
+  const [restoring, setRestoring] = useState(true);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
   const [confirmedDuplicate, setConfirmedDuplicate] = useState(false);
+
+  // Load saved form data after mount (not in useState initializers) so the
+  // server-rendered HTML matches the first client render — avoids React
+  // hydration mismatches. Then restore an active registration, so a reload
+  // or a tap on a push notification brings back the status screen instead
+  // of the empty form.
+  useEffect(() => {
+    setName(localStorage.getItem('os_name') || '');
+    setEmail(localStorage.getItem('os_email') || '');
+    setVideoConsent(localStorage.getItem('os_consent') === 'true');
+
+    const savedId = localStorage.getItem('os_entry_id');
+    if (!savedId) { setRestoring(false); return; }
+    supabase
+      .from('queue_entries')
+      .select('*')
+      .eq('id', savedId)
+      .eq('session_id', getTodaySessionId())
+      .neq('status', 'skipped')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setEntry(data as QueueEntry);
+        else localStorage.removeItem('os_entry_id');
+        setRestoring(false);
+      });
+  }, []);
 
   // Spotify search state
   const [songQuery, setSongQuery] = useState('');
@@ -37,6 +55,7 @@ export default function GuestPage() {
   const [showResults, setShowResults] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const searchSeq = useRef(0);
 
   useEffect(() => {
     fetch('/api/songs')
@@ -56,19 +75,27 @@ export default function GuestPage() {
 
   const searchSpotify = useCallback(async (query: string) => {
     if (query.length < 2) { setSpotifyResults([]); return; }
+    // Sequence guard: a slow response for an earlier query must not
+    // overwrite the results of a newer one.
+    const seq = ++searchSeq.current;
     setSearching(true);
     try {
       const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-      if (Array.isArray(data)) setSpotifyResults(data);
+      if (seq === searchSeq.current && Array.isArray(data)) setSpotifyResults(data);
     } catch { /* ignore */ }
-    setSearching(false);
+    if (seq === searchSeq.current) setSearching(false);
   }, []);
 
   const handleSongQueryChange = (value: string) => {
     setSongQuery(value);
     setSelectedSong('');
     setShowResults(true);
+    // The old duplicate warning refers to the previously selected song —
+    // editing the text means a different song, so it must not keep
+    // blocking the submit button.
+    setDuplicateWarning(false);
+    setConfirmedDuplicate(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => searchSpotify(value), 300);
   };
@@ -135,6 +162,7 @@ export default function GuestPage() {
       localStorage.setItem('os_name', name.trim());
       localStorage.setItem('os_email', email.trim());
       localStorage.setItem('os_consent', String(videoConsent));
+      localStorage.setItem('os_entry_id', (data as QueueEntry).id);
       setEntry(data as QueueEntry);
       if (songValue && songValue !== 'Valfri / Any song') {
         supabase.rpc('record_song_request', { p_label: songValue }).then(() => {}, () => {});
@@ -143,8 +171,13 @@ export default function GuestPage() {
     setSubmitting(false);
   };
 
+  if (restoring) {
+    return <div className="min-h-screen" />;
+  }
+
   if (entry) {
     return <StatusScreen entry={entry} onBack={() => {
+      localStorage.removeItem('os_entry_id');
       setEntry(null);
       clearSelection();
     }} />;
